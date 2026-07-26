@@ -1,42 +1,45 @@
 <div class="page">
     <div class="page-header">
         <div>
-            <h1>Categories</h1>
-            <p>Income, expense, and transfer categories for the active company.</p>
+            <h1>{{ "categories.title" | translate }}</h1>
+            <p>{{ "categories.subtitle" | translate }}</p>
         </div>
         @if (companyContext.selectedCompany()) {
             <button type="button" class="btn btn-primary" (click)="showForm.set(!showForm())">
-                {{ showForm() ? "Cancel" : "+ New category" }}
+                {{ (showForm() ? "common.cancel" : "categories.newCategory") | translate }}
             </button>
         }
     </div>
 
     @if (!companyContext.selectedCompany()) {
-        <app-empty-state title="No active company selected" description="Select a company to manage its categories.">
-            <a routerLink="/companies" class="btn btn-primary">Go to companies</a>
+        <app-empty-state
+            [title]="'dashboard.emptyCompanyTitle' | translate"
+            [description]="'categories.emptyCompanyDescription' | translate"
+        >
+            <a routerLink="/companies" class="btn btn-primary">{{ "common.goToCompanies" | translate }}</a>
         </app-empty-state>
     } @else {
         @if (showForm()) {
             <div class="card">
-                <h2 class="card-title">New category</h2>
+                <h2 class="card-title">{{ "categories.newCategoryTitle" | translate }}</h2>
                 <form [formGroup]="form" (ngSubmit)="submit()">
                     <div class="form-grid">
                         <div class="field">
-                            <label for="name">Name</label>
-                            <input id="name" formControlName="name" placeholder="Office supplies" />
+                            <label for="name">{{ "common.name" | translate }}</label>
+                            <input id="name" formControlName="name" [attr.placeholder]="'categories.namePlaceholder' | translate" />
                         </div>
                         <div class="field">
-                            <label for="type">Type</label>
+                            <label for="type">{{ "common.type" | translate }}</label>
                             <select id="type" formControlName="type">
                                 @for (type of types; track type) {
-                                    <option [value]="type">{{ type }}</option>
+                                    <option [value]="type">{{ "enums.transactionType." + type | translate }}</option>
                                 }
                             </select>
                         </div>
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary" [disabled]="submitting()">
-                            {{ submitting() ? "Saving…" : "Create category" }}
+                            {{ (submitting() ? "categories.saving" : "categories.createCategory") | translate }}
                         </button>
                     </div>
                 </form>
@@ -45,14 +48,17 @@
 
         <div class="card">
             @if (categories().length === 0) {
-                <app-empty-state title="No categories yet" description="Create categories to classify transactions." />
+                <app-empty-state
+                    [title]="'categories.emptyTitle' | translate"
+                    [description]="'categories.emptyDescription' | translate"
+                />
             } @else {
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Type</th>
+                                <th>{{ "categories.colName" | translate }}</th>
+                                <th>{{ "categories.colType" | translate }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -66,7 +72,7 @@
                                             [class.badge-danger]="category.type === 'EXPENSE'"
                                             [class.badge-info]="category.type === 'TRANSFER'"
                                         >
-                                            {{ category.type }}
+                                            {{ "enums.transactionType." + category.type | translate }}
                                         </span>
                                     </td>
                                 </tr>
