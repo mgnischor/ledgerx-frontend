@@ -1,6 +1,8 @@
-import { Component, effect, inject, signal } from "@angular/core";
+import { Component, inject, signal } from "@angular/core";
+import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterLink } from "@angular/router";
+import { Subject, finalize, merge, of, switchMap } from "rxjs";
 import { DocumentType, PartyDto, PartyType } from "../../../core/models/billing.model";
 import { PartyApi } from "../../../core/services/api/party.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
@@ -19,9 +21,10 @@ export class PartiesPage {
     private readonly toast = inject(ToastService);
     protected readonly companyContext = inject(CompanyContextService);
 
+    private readonly reload$ = new Subject<void>();
+
     protected readonly documentTypes: DocumentType[] = ["CPF", "CNPJ"];
     protected readonly partyTypes: PartyType[] = ["CUSTOMER", "SUPPLIER"];
-    protected readonly parties = signal<PartyDto[]>([]);
     protected readonly submitting = signal(false);
     protected readonly showForm = signal(false);
 
@@ -33,20 +36,15 @@ export class PartiesPage {
         type: ["CUSTOMER" as PartyType, [Validators.required]],
     });
 
-    constructor() {
-        effect(() => {
-            const company = this.companyContext.selectedCompany();
-            if (company) {
-                this.load(company.id);
-            } else {
-                this.parties.set([]);
-            }
-        });
-    }
-
-    protected load(companyId: string): void {
-        this.partyApi.list(companyId).subscribe((parties) => this.parties.set(parties));
-    }
+    protected readonly parties = toSignal(
+        merge(toObservable(this.companyContext.selectedCompany), this.reload$).pipe(
+            switchMap(() => {
+                const company = this.companyContext.selectedCompany();
+                return company ? this.partyApi.list(company.id) : of([]);
+            }),
+        ),
+        { initialValue: [] as PartyDto[] },
+    );
 
     protected submit(): void {
         const company = this.companyContext.selectedCompany();
@@ -56,15 +54,19 @@ export class PartiesPage {
         }
 
         this.submitting.set(true);
-        this.partyApi.create(company.id, this.form.getRawValue()).subscribe({
-            next: (party) => {
-                this.parties.update((parties) => [...parties, party]);
-                this.toast.success(`${party.name} created.`);
-                this.form.reset({ documentType: "CNPJ", type: "CUSTOMER" });
-                this.showForm.set(false);
-                this.submitting.set(false);
-            },
-            error: () => this.submitting.set(false),
-        });
+        this.partyApi
+            .create(company.id, this.form.getRawValue())
+            .pipe(finalize(() => this.submitting.set(false)))
+            .subscribe({
+                next: (party) => {
+                    this.toast.success(`${party.name} created.`);
+                    this.form.reset({ documentType: "CNPJ", type: "CUSTOMER" });
+                    this.showForm.set(false);
+                    this.reload$.next();
+                },
+                error: () => {
+                    // error toast is raised globally by the HTTP error interceptor
+                },
+            });
     }
 }
