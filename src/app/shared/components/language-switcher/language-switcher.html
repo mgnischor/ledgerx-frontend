@@ -1,0 +1,10 @@
+<select
+    class="language-switcher"
+    [value]="i18n.locale()"
+    (change)="onChange($any($event.target).value)"
+    [attr.aria-label]="'topbar.language' | translate"
+>
+    @for (option of i18n.locales; track option.code) {
+        <option [value]="option.code">{{ option.flag }} {{ option.label }}</option>
+    }
+</select>
