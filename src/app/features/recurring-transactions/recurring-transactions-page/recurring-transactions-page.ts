@@ -1,3 +1,4 @@
+import { DecimalPipe } from "@angular/common";
 import { Component, inject, signal } from "@angular/core";
 import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
@@ -15,11 +16,13 @@ import { FinancialAccountApi } from "../../../core/services/api/financial-accoun
 import { RecurringTransactionApi } from "../../../core/services/api/recurring-transaction.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
 import { ToastService } from "../../../core/services/toast.service";
+import { TranslationService } from "../../../core/services/translation.service";
 import { EmptyState } from "../../../shared/components/empty-state/empty-state";
+import { TranslatePipe } from "../../../shared/pipes/translate.pipe";
 
 @Component({
     selector: "app-recurring-transactions-page",
-    imports: [ReactiveFormsModule, RouterLink, EmptyState],
+    imports: [ReactiveFormsModule, RouterLink, EmptyState, TranslatePipe, DecimalPipe],
     templateUrl: "./recurring-transactions-page.html",
     styleUrl: "./recurring-transactions-page.scss",
 })
@@ -30,6 +33,7 @@ export class RecurringTransactionsPage {
     private readonly categoryApi = inject(CategoryApi);
     private readonly toast = inject(ToastService);
     protected readonly companyContext = inject(CompanyContextService);
+    protected readonly i18n = inject(TranslationService);
 
     private readonly reload$ = new Subject<void>();
 
@@ -99,7 +103,7 @@ export class RecurringTransactionsPage {
             .pipe(finalize(() => this.submitting.set(false)))
             .subscribe({
                 next: () => {
-                    this.toast.success("Recurring rule created.");
+                    this.toast.success(this.i18n.t("recurringTransactions.toastCreated"));
                     this.form.reset({
                         type: "EXPENSE",
                         amount: 0,
@@ -126,7 +130,7 @@ export class RecurringTransactionsPage {
             .pipe(finalize(() => this.generating.set(false)))
             .subscribe({
                 next: () => {
-                    this.toast.success("Due recurring transactions generated.");
+                    this.toast.success(this.i18n.t("recurringTransactions.toastGenerated"));
                     this.reload$.next();
                 },
                 error: () => {
@@ -137,12 +141,12 @@ export class RecurringTransactionsPage {
 
     protected deactivate(rule: RecurringTransactionRuleDto): void {
         const company = this.companyContext.selectedCompany();
-        if (!company || !confirm("Deactivate this recurring rule?")) {
+        if (!company || !confirm(this.i18n.t("recurringTransactions.confirmDeactivate"))) {
             return;
         }
         this.recurringApi.deactivate(company.id, rule.id).subscribe({
             next: () => {
-                this.toast.success("Recurring rule deactivated.");
+                this.toast.success(this.i18n.t("recurringTransactions.toastDeactivated"));
                 this.reload$.next();
             },
         });
