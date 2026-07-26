@@ -1,5 +1,7 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import { Component, inject, signal } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { Subject, map, switchMap } from "rxjs";
 import { CompanyContextService } from "../../core/services/company-context.service";
 import { NotificationApi } from "../../core/services/api/notification.api";
 import { AuthService } from "../../core/services/auth.service";
@@ -32,28 +34,30 @@ const NAV_ITEMS: NavItem[] = [
     templateUrl: "./shell.html",
     styleUrl: "./shell.scss",
 })
-export class Shell implements OnInit {
+export class Shell {
     protected readonly authService = inject(AuthService);
     protected readonly companyContext = inject(CompanyContextService);
     private readonly notificationApi = inject(NotificationApi);
     private readonly router = inject(Router);
 
-    protected readonly unreadCount = signal(0);
+    private readonly refreshUnread$ = new Subject<void>();
+
     protected readonly sidebarOpen = signal(false);
 
     protected readonly navItems = NAV_ITEMS.filter(
         (item) => !item.roles || this.authService.hasRole(...(item.roles as never[])),
     );
 
-    ngOnInit(): void {
-        this.refreshUnreadCount();
-    }
+    protected readonly unreadCount = toSignal(
+        this.refreshUnread$.pipe(
+            switchMap(() => this.notificationApi.list(true)),
+            map((notifications) => notifications.length),
+        ),
+        { initialValue: 0 },
+    );
 
-    protected refreshUnreadCount(): void {
-        this.notificationApi.list(true).subscribe({
-            next: (notifications) => this.unreadCount.set(notifications.length),
-            error: () => this.unreadCount.set(0),
-        });
+    constructor() {
+        this.refreshUnread$.next();
     }
 
     protected selectCompany(companyId: string): void {
