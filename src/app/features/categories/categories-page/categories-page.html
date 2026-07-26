@@ -1,0 +1,80 @@
+<div class="page">
+    <div class="page-header">
+        <div>
+            <h1>Categories</h1>
+            <p>Income, expense, and transfer categories for the active company.</p>
+        </div>
+        @if (companyContext.selectedCompany()) {
+            <button type="button" class="btn btn-primary" (click)="showForm.set(!showForm())">
+                {{ showForm() ? "Cancel" : "+ New category" }}
+            </button>
+        }
+    </div>
+
+    @if (!companyContext.selectedCompany()) {
+        <app-empty-state title="No active company selected" description="Select a company to manage its categories.">
+            <a routerLink="/companies" class="btn btn-primary">Go to companies</a>
+        </app-empty-state>
+    } @else {
+        @if (showForm()) {
+            <div class="card">
+                <h2 class="card-title">New category</h2>
+                <form [formGroup]="form" (ngSubmit)="submit()">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="name">Name</label>
+                            <input id="name" formControlName="name" placeholder="Office supplies" />
+                        </div>
+                        <div class="field">
+                            <label for="type">Type</label>
+                            <select id="type" formControlName="type">
+                                @for (type of types; track type) {
+                                    <option [value]="type">{{ type }}</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+                            {{ submitting() ? "Saving…" : "Create category" }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        }
+
+        <div class="card">
+            @if (categories().length === 0) {
+                <app-empty-state title="No categories yet" description="Create categories to classify transactions." />
+            } @else {
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (category of categories(); track category.id) {
+                                <tr>
+                                    <td>{{ category.name }}</td>
+                                    <td>
+                                        <span
+                                            class="badge"
+                                            [class.badge-success]="category.type === 'INCOME'"
+                                            [class.badge-danger]="category.type === 'EXPENSE'"
+                                            [class.badge-info]="category.type === 'TRANSFER'"
+                                        >
+                                            {{ category.type }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>
