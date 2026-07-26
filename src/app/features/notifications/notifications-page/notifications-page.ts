@@ -4,16 +4,19 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { Subject, switchMap } from "rxjs";
 import { NotificationDto } from "../../../core/models/notification.model";
 import { NotificationApi } from "../../../core/services/api/notification.api";
+import { TranslationService } from "../../../core/services/translation.service";
 import { EmptyState } from "../../../shared/components/empty-state/empty-state";
+import { TranslatePipe } from "../../../shared/pipes/translate.pipe";
 
 @Component({
     selector: "app-notifications-page",
-    imports: [EmptyState, DatePipe],
+    imports: [EmptyState, DatePipe, TranslatePipe],
     templateUrl: "./notifications-page.html",
     styleUrl: "./notifications-page.scss",
 })
 export class NotificationsPage {
     private readonly notificationApi = inject(NotificationApi);
+    protected readonly i18n = inject(TranslationService);
     private readonly reload$ = new Subject<void>();
 
     protected readonly unreadOnly = signal(false);
