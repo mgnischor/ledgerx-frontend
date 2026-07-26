@@ -23,6 +23,7 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 - [Code Scaffolding](#-code-scaffolding)
 - [Testing](#-testing)
 - [Building](#-building)
+- [Building & Running with Docker](#-building--running-with-docker)
 - [Repository Structure](#-repository-structure)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -93,7 +94,9 @@ The app is a standalone-components, signals-based Angular SPA with routes lazy-l
 
 ## 🔌 Backend Integration
 
-The frontend calls the LedgerX backend REST API, versioned under `/api/v1`, directly — there is currently **no dev-server proxy**; `environment.ts` points `apiUrl` straight at `https://localhost:8080/api/v1`. Because the backend serves a self-signed TLS certificate that is regenerated on every restart, open `https://localhost:8080` once in the browser and accept the certificate before the SPA's requests will succeed.
+The frontend calls the LedgerX backend REST API, versioned under `/api/v1`, through a same-origin path: `environment.ts` sets `apiUrl` to the relative `/api/v1`, and `proxy.conf.json` forwards `/api` from the `ng serve` dev server to the backend (`secure: false` so the dev proxy accepts the backend's self-signed TLS certificate). This avoids CORS entirely in local development, mirroring how the nginx image built by this repo's `Dockerfile` reverse-proxies `/api/` in production/Docker (see [Building & Running with Docker](#-building--running-with-docker)).
+
+By default `proxy.conf.json` targets `https://localhost:25360`, matching the host port the backend's own `compose.yaml` publishes. If you run the backend a different way (e.g. `./gradlew bootRun`, which serves on `https://localhost:8080`), edit the `target` in `proxy.conf.json` accordingly.
 
 Endpoints consumed by the UI:
 
@@ -137,14 +140,15 @@ Endpoints consumed by the UI:
 | GET        | `/api/v1/notifications?unreadOnly=true`           | Notification badge and feed      |
 | PATCH      | `/api/v1/notifications/{notificationId}/read`     | Mark a notification as read      |
 
-Every backend endpoint is documented with springdoc-openapi at `https://localhost:8080/swagger-ui/index.html` (JSON at `/v3/api-docs`), permitted without authentication in local development — useful when wiring a new screen to an endpoint.
+Every backend endpoint is documented with springdoc-openapi at `https://<backend-host>/swagger-ui/index.html` (JSON at `/v3/api-docs`; e.g. `https://localhost:25360/swagger-ui/index.html` for the backend's own `compose.yaml`), permitted without authentication in local development — useful when wiring a new screen to an endpoint.
 
 ## ⚠️ Known Backend Limitations
 
-Two gaps in the current backend API (see the backend's `BUSINESS_RULES.md` → _Known Gaps_) shape parts of the UI, and are called out inline where they matter:
+Three gaps in the current backend API shape parts of the frontend, and are called out inline where they matter:
 
-- **No "list companies" endpoint.** `CompanyController` only exposes `POST` and `PATCH .../deactivate` — there is no `GET /api/v1/companies`. The frontend works around this with `CompanyContextService`, which remembers every company you register or select in `localStorage` and offers it as the active company context. Companies created from another browser/session are invisible until re-registered or manually noted.
+- **No "list companies" endpoint.** `CompanyController` only exposes `POST` and `PATCH .../deactivate` — there is no `GET /api/v1/companies`. The frontend works around this with `CompanyContextService`, which remembers every company you register or select in `localStorage` and offers it as the active company context. Companies created from another browser/session are invisible until re-registered or manually noted. (See the backend's `BUSINESS_RULES.md` → _Known Gaps_.)
 - **`InvoiceDto` does not expose installment IDs.** The DTO only carries `installmentCount`, never the individual installment identifiers needed by `PATCH /invoices/{invoiceId}/payments`. The Invoices screen asks you to paste the installment ID from another source (e.g. Swagger) when registering a payment.
+- **`@Valid` bean-validation failures (plain `400 Bad Request`) carry no field-level detail.** `GlobalExceptionHandler` only handles `EntityNotFoundException`, `BusinessRuleViolationException`, `InvalidCredentialsException`, and `AccessDeniedException` — each of those returns the structured `ApiError` body (`{ timestamp, status, error, message, details }`, matching `ApiError.java`). An uncaught `MethodArgumentNotValidException` (e.g. an invalid CNPJ check digit or a malformed CEP on the Companies form) instead falls through to Spring Boot's default error body, `{ timestamp, status, error, path }`, with no `message` at all. The frontend's `errorInterceptor` degrades gracefully to `"<error>. Check the highlighted fields and try again."` in that case, but can't point at the specific invalid field until the backend adds a handler for it.
 
 ## Authentication
 
@@ -168,8 +172,9 @@ The frontend currently implements **password login with JWT only** (`POST /api/v
 
 - Node.js 22 LTS or newer
 - pnpm (the project pins `packageManager: pnpm@10.33.0`)
-- A running [LedgerX backend](https://github.com/nischor/ledgerx-backend) — `docker compose up -d --build` starts the API, PostgreSQL, RabbitMQ, and Grafana LGTM
-- A browser that has accepted the backend's self-signed certificate at `https://localhost:8080`
+- A running [LedgerX backend](https://github.com/nischor/ledgerx-backend) — `docker compose up -d --build` starts the API, PostgreSQL, RabbitMQ, and Grafana LGTM, publishing the API at `https://localhost:25360`
+
+No manual certificate acceptance is required: the browser only ever talks to `http://localhost:4200`, and the backend's self-signed TLS certificate is handled server-side by the `ng serve` dev proxy (`secure: false` in `proxy.conf.json`).
 
 ### Setup
 
@@ -183,20 +188,20 @@ pnpm install
 
 ```bash
 pnpm start
-# equivalent to: ng serve
+# equivalent to: ng serve --proxy-config proxy.conf.json (wired via angular.json's serve.options.proxyConfig)
 ```
 
-Once the server is running, open your browser at `http://localhost:4200/`. The application reloads automatically whenever you modify source files.
+Once the server is running, open your browser at `http://localhost:4200/`. The application reloads automatically whenever you modify source files. If your backend runs on a different host/port than `https://localhost:25360` (e.g. `https://localhost:8080` via `./gradlew bootRun`), edit the `target` in `proxy.conf.json`.
 
 ## 🧩 Environment Configuration
 
 Runtime settings live in `src/environments/`:
 
 ```ts
-// environment.ts — used by `ng serve`
+// environment.ts — used by `ng serve`, proxied through proxy.conf.json
 export const environment = {
     production: false,
-    apiUrl: "https://localhost:8080/api/v1",
+    apiUrl: "/api/v1",
 };
 
 // environment.prod.ts — swapped in by `ng build` via fileReplacements
@@ -206,7 +211,7 @@ export const environment = {
 };
 ```
 
-`angular.json`'s production build configuration replaces `environment.ts` with `environment.prod.ts`, so a production deployment is expected to sit behind a reverse proxy that serves the SPA and forwards `/api/v1` to the backend. Keep secrets out of both files — anything shipped to the browser is public.
+Both environments use the same relative `apiUrl` — only what sits in front of the app differs: the Vite/esbuild dev server plus `proxy.conf.json` in development, or the nginx image built by this repo's `Dockerfile` in production/Docker. Keep secrets out of both files — anything shipped to the browser is public.
 
 ## 🧱 Code Scaffolding
 
@@ -250,6 +255,28 @@ ng build
 
 Compiles the project and stores build artifacts in `dist/`. The production configuration applies tree-shaking, per-route code splitting, and hashed filenames for long-term caching.
 
+## 🐳 Building & Running with Docker
+
+The `Dockerfile` is a two-stage build: `node:22-alpine` compiles the app with `pnpm build`, then `nginx:1.27-alpine` serves the static output from `dist/ledgerx-frontend/browser`. The nginx config is a template (`docker/nginx.conf.template`) rendered at container startup via the official image's `envsubst` entrypoint — it serves the SPA with an `index.html` fallback for client-side routes and reverse-proxies `/api/` to the backend, so the browser only ever talks to one origin (no CORS, same pattern as the dev proxy).
+
+```bash
+docker build -t ledgerx-frontend .
+docker run -p 4200:80 -e BACKEND_ORIGIN=https://host.docker.internal:25360 ledgerx-frontend
+```
+
+Or with Compose (`compose.yaml` at the repo root):
+
+```bash
+docker compose up -d --build
+```
+
+| Variable         | Default                                   | Description                                                                 |
+| ----------------- | ------------------------------------------ | ----------------------------------------------------------------------------- |
+| `BACKEND_ORIGIN`  | `https://host.docker.internal:25360`      | Origin nginx proxies `/api/` to. `proxy_ssl_verify off` tolerates the backend's self-signed certificate. Override if the backend runs elsewhere — e.g. join the backend's compose network and point this at `https://ledgerx:8080`. |
+| `FRONTEND_PORT`   | `4200`                                    | Host port the container's nginx (port 80) is published on.                  |
+
+`compose.yaml` only defines the frontend service; it expects the backend to be reachable (its own `compose.yaml`, run separately, publishes `25360:8080`).
+
 ## 📁 Repository Structure
 
 ```text
@@ -286,9 +313,15 @@ ledgerx-frontend/
  │   ├── styles.scss              # global SCSS design system
  │   ├── index.html
  │   └── main.ts
+ ├── docker/
+ │   └── nginx.conf.template      # SPA fallback + /api/ reverse proxy, rendered via envsubst
  ├── public/                      # static assets (favicon, etc.)
  ├── angular.json
  ├── package.json
+ ├── proxy.conf.json              # ng serve dev proxy — /api → the backend
+ ├── Dockerfile
+ ├── compose.yaml
+ ├── .dockerignore
  ├── tsconfig.json
  └── README.md
 ```
