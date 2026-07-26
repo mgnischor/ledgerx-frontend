@@ -8,11 +8,13 @@ import { FinancialAccountDto } from "../../../core/models/accounting.model";
 import { FinancialAccountApi } from "../../../core/services/api/financial-account.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
 import { ToastService } from "../../../core/services/toast.service";
+import { TranslationService } from "../../../core/services/translation.service";
 import { EmptyState } from "../../../shared/components/empty-state/empty-state";
+import { TranslatePipe } from "../../../shared/pipes/translate.pipe";
 
 @Component({
     selector: "app-financial-accounts-page",
-    imports: [ReactiveFormsModule, RouterLink, EmptyState, DecimalPipe],
+    imports: [ReactiveFormsModule, RouterLink, EmptyState, DecimalPipe, TranslatePipe],
     templateUrl: "./financial-accounts-page.html",
     styleUrl: "./financial-accounts-page.scss",
 })
@@ -21,6 +23,7 @@ export class FinancialAccountsPage {
     private readonly financialAccountApi = inject(FinancialAccountApi);
     private readonly toast = inject(ToastService);
     protected readonly companyContext = inject(CompanyContextService);
+    protected readonly i18n = inject(TranslationService);
 
     private readonly reload$ = new Subject<void>();
 
@@ -56,7 +59,7 @@ export class FinancialAccountsPage {
             .pipe(finalize(() => this.submitting.set(false)))
             .subscribe({
                 next: (account) => {
-                    this.toast.success(`${account.name} created.`);
+                    this.toast.success(this.i18n.t("financialAccounts.toastCreated", { name: account.name }));
                     this.form.reset({ openingBalance: 0 });
                     this.showForm.set(false);
                     this.reload$.next();
@@ -69,12 +72,12 @@ export class FinancialAccountsPage {
 
     protected deactivate(account: FinancialAccountDto): void {
         const company = this.companyContext.selectedCompany();
-        if (!company || !confirm(`Deactivate ${account.name}?`)) {
+        if (!company || !confirm(this.i18n.t("financialAccounts.confirmDeactivate", { name: account.name }))) {
             return;
         }
         this.financialAccountApi.deactivate(company.id, account.id).subscribe({
             next: () => {
-                this.toast.success(`${account.name} deactivated.`);
+                this.toast.success(this.i18n.t("financialAccounts.toastDeactivated", { name: account.name }));
                 this.reload$.next();
             },
         });
