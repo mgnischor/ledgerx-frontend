@@ -1,38 +1,45 @@
 <div class="page">
     <div class="page-header">
         <div>
-            <h1>Financial Accounts</h1>
-            <p>Cash and bank accounts for the active company.</p>
+            <h1>{{ "financialAccounts.title" | translate }}</h1>
+            <p>{{ "financialAccounts.subtitle" | translate }}</p>
         </div>
         @if (companyContext.selectedCompany()) {
             <button type="button" class="btn btn-primary" (click)="showForm.set(!showForm())">
-                {{ showForm() ? "Cancel" : "+ New account" }}
+                {{ (showForm() ? "common.cancel" : "financialAccounts.newAccount") | translate }}
             </button>
         }
     </div>
 
     @if (!companyContext.selectedCompany()) {
-        <app-empty-state title="No active company selected" description="Select a company to manage its accounts.">
-            <a routerLink="/companies" class="btn btn-primary">Go to companies</a>
+        <app-empty-state
+            [title]="'dashboard.emptyCompanyTitle' | translate"
+            [description]="'financialAccounts.emptyCompanyDescription' | translate"
+        >
+            <a routerLink="/companies" class="btn btn-primary">{{ "common.goToCompanies" | translate }}</a>
         </app-empty-state>
     } @else {
         @if (showForm()) {
             <div class="card">
-                <h2 class="card-title">New financial account</h2>
+                <h2 class="card-title">{{ "financialAccounts.newAccountTitle" | translate }}</h2>
                 <form [formGroup]="form" (ngSubmit)="submit()">
                     <div class="form-grid">
                         <div class="field">
-                            <label for="name">Account name</label>
-                            <input id="name" formControlName="name" placeholder="Main checking account" />
+                            <label for="name">{{ "financialAccounts.accountName" | translate }}</label>
+                            <input
+                                id="name"
+                                formControlName="name"
+                                [attr.placeholder]="'financialAccounts.accountNamePlaceholder' | translate"
+                            />
                         </div>
                         <div class="field">
-                            <label for="openingBalance">Opening balance (BRL)</label>
+                            <label for="openingBalance">{{ "financialAccounts.openingBalance" | translate }}</label>
                             <input id="openingBalance" type="number" step="0.01" min="0" formControlName="openingBalance" />
                         </div>
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary" [disabled]="submitting()">
-                            {{ submitting() ? "Saving…" : "Create account" }}
+                            {{ (submitting() ? "financialAccounts.saving" : "financialAccounts.createAccount") | translate }}
                         </button>
                     </div>
                 </form>
@@ -41,16 +48,19 @@
 
         <div class="card">
             @if (accounts().length === 0) {
-                <app-empty-state title="No financial accounts yet" description="Create the first account for this company." />
+                <app-empty-state
+                    [title]="'financialAccounts.emptyTitle' | translate"
+                    [description]="'financialAccounts.emptyDescription' | translate"
+                />
             } @else {
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Balance</th>
-                                <th>Currency</th>
-                                <th>Status</th>
+                                <th>{{ "financialAccounts.colName" | translate }}</th>
+                                <th>{{ "financialAccounts.colBalance" | translate }}</th>
+                                <th>{{ "financialAccounts.colCurrency" | translate }}</th>
+                                <th>{{ "common.status" | translate }}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -58,17 +68,17 @@
                             @for (account of accounts(); track account.id) {
                                 <tr>
                                     <td><strong>{{ account.name }}</strong></td>
-                                    <td>{{ account.balance | number: "1.2-2" }}</td>
+                                    <td>{{ account.balance | number: "1.2-2" : i18n.locale() }}</td>
                                     <td>{{ account.currency }}</td>
                                     <td>
                                         <span class="badge" [class.badge-success]="account.active" [class.badge-neutral]="!account.active">
-                                            {{ account.active ? "Active" : "Inactive" }}
+                                            {{ (account.active ? "common.active" : "common.inactive") | translate }}
                                         </span>
                                     </td>
                                     <td>
                                         @if (account.active) {
                                             <button type="button" class="btn btn-danger btn-sm" (click)="deactivate(account)">
-                                                Deactivate
+                                                {{ "common.deactivate" | translate }}
                                             </button>
                                         }
                                     </td>
