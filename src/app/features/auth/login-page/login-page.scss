@@ -1,0 +1,53 @@
+.login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(47, 95, 237, 0.16), transparent 45%),
+        radial-gradient(circle at 80% 80%, rgba(47, 95, 237, 0.12), transparent 45%), var(--color-bg);
+    padding: 24px;
+}
+
+.login-panel {
+    width: 100%;
+    max-width: 380px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 32px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.brand-mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--color-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.brand h1 {
+    font-size: 18px;
+}
+
+.brand p {
+    font-size: 12px;
+}
+
+.hint {
+    margin-top: 20px;
+    font-size: 12px;
+    text-align: center;
+}
