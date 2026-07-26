@@ -1,7 +1,9 @@
 import { LowerCasePipe } from "@angular/common";
-import { Component, effect, inject, signal } from "@angular/core";
+import { Component, inject, signal } from "@angular/core";
+import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterLink } from "@angular/router";
+import { Subject, finalize, merge, of, switchMap } from "rxjs";
 import { CategoryDto, FinancialAccountDto, TransactionType } from "../../../core/models/accounting.model";
 import { CategoryApi } from "../../../core/services/api/category.api";
 import { FinancialAccountApi } from "../../../core/services/api/financial-account.api";
@@ -26,10 +28,10 @@ export class TransactionsPage {
     private readonly toast = inject(ToastService);
     protected readonly companyContext = inject(CompanyContextService);
 
+    private readonly reloadAccounts$ = new Subject<void>();
+
     protected readonly tab = signal<Tab>("transaction");
     protected readonly types: TransactionType[] = ["INCOME", "EXPENSE"];
-    protected readonly accounts = signal<FinancialAccountDto[]>([]);
-    protected readonly categories = signal<CategoryDto[]>([]);
     protected readonly submitting = signal(false);
     protected readonly transferSubmitting = signal(false);
 
@@ -48,18 +50,22 @@ export class TransactionsPage {
         amount: [0, [Validators.required, Validators.min(0.01)]],
     });
 
-    constructor() {
-        effect(() => {
-            const company = this.companyContext.selectedCompany();
-            if (company) {
-                this.financialAccountApi.list(company.id).subscribe((accounts) => this.accounts.set(accounts));
-                this.categoryApi.list(company.id).subscribe((categories) => this.categories.set(categories));
-            } else {
-                this.accounts.set([]);
-                this.categories.set([]);
-            }
-        });
-    }
+    protected readonly accounts = toSignal(
+        merge(toObservable(this.companyContext.selectedCompany), this.reloadAccounts$).pipe(
+            switchMap(() => {
+                const company = this.companyContext.selectedCompany();
+                return company ? this.financialAccountApi.list(company.id) : of([]);
+            }),
+        ),
+        { initialValue: [] as FinancialAccountDto[] },
+    );
+
+    protected readonly categories = toSignal(
+        toObservable(this.companyContext.selectedCompany).pipe(
+            switchMap((company) => (company ? this.categoryApi.list(company.id) : of([]))),
+        ),
+        { initialValue: [] as CategoryDto[] },
+    );
 
     protected filteredCategories(type: TransactionType): CategoryDto[] {
         return this.categories().filter((category) => category.type === type);
@@ -73,15 +79,19 @@ export class TransactionsPage {
 
         this.submitting.set(true);
         const value = this.form.getRawValue();
-        this.transactionApi.record({ ...value, description: value.description || undefined }).subscribe({
-            next: () => {
-                this.toast.success("Transaction recorded.");
-                this.form.reset({ type: "EXPENSE", amount: 0, occurredOn: this.today() });
-                this.submitting.set(false);
-                this.refreshAccounts();
-            },
-            error: () => this.submitting.set(false),
-        });
+        this.transactionApi
+            .record({ ...value, description: value.description || undefined })
+            .pipe(finalize(() => this.submitting.set(false)))
+            .subscribe({
+                next: () => {
+                    this.toast.success("Transaction recorded.");
+                    this.form.reset({ type: "EXPENSE", amount: 0, occurredOn: this.today() });
+                    this.reloadAccounts$.next();
+                },
+                error: () => {
+                    // error toast is raised globally by the HTTP error interceptor
+                },
+            });
     }
 
     protected submitTransfer(): void {
@@ -91,22 +101,19 @@ export class TransactionsPage {
         }
 
         this.transferSubmitting.set(true);
-        this.transactionApi.transfer(this.transferForm.getRawValue()).subscribe({
-            next: () => {
-                this.toast.success("Transfer completed.");
-                this.transferForm.reset({ amount: 0 });
-                this.transferSubmitting.set(false);
-                this.refreshAccounts();
-            },
-            error: () => this.transferSubmitting.set(false),
-        });
-    }
-
-    private refreshAccounts(): void {
-        const company = this.companyContext.selectedCompany();
-        if (company) {
-            this.financialAccountApi.list(company.id).subscribe((accounts) => this.accounts.set(accounts));
-        }
+        this.transactionApi
+            .transfer(this.transferForm.getRawValue())
+            .pipe(finalize(() => this.transferSubmitting.set(false)))
+            .subscribe({
+                next: () => {
+                    this.toast.success("Transfer completed.");
+                    this.transferForm.reset({ amount: 0 });
+                    this.reloadAccounts$.next();
+                },
+                error: () => {
+                    // error toast is raised globally by the HTTP error interceptor
+                },
+            });
     }
 
     private today(): string {
