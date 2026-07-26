@@ -5,7 +5,9 @@ import { CompanySize } from "../../../core/models/company.model";
 import { CompanyApi } from "../../../core/services/api/company.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
 import { ToastService } from "../../../core/services/toast.service";
+import { TranslationService } from "../../../core/services/translation.service";
 import { EmptyState } from "../../../shared/components/empty-state/empty-state";
+import { TranslatePipe } from "../../../shared/pipes/translate.pipe";
 
 const BRAZILIAN_STATES = [
     "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB",
@@ -14,7 +16,7 @@ const BRAZILIAN_STATES = [
 
 @Component({
     selector: "app-companies-page",
-    imports: [ReactiveFormsModule, EmptyState],
+    imports: [ReactiveFormsModule, EmptyState, TranslatePipe],
     templateUrl: "./companies-page.html",
     styleUrl: "./companies-page.scss",
 })
@@ -23,6 +25,7 @@ export class CompaniesPage {
     private readonly companyApi = inject(CompanyApi);
     private readonly toast = inject(ToastService);
     protected readonly companyContext = inject(CompanyContextService);
+    protected readonly i18n = inject(TranslationService);
 
     protected readonly states = BRAZILIAN_STATES;
     protected readonly sizes: CompanySize[] = ["MEI", "MICRO", "SMALL"];
@@ -55,7 +58,7 @@ export class CompaniesPage {
             .subscribe({
                 next: (company) => {
                     this.companyContext.remember(company);
-                    this.toast.success(`${company.tradeName} registered.`);
+                    this.toast.success(this.i18n.t("companies.toastRegistered", { name: company.tradeName }));
                     this.form.reset({ size: "MICRO", country: "Brazil" });
                     this.showForm.set(false);
                 },
@@ -66,20 +69,20 @@ export class CompaniesPage {
     }
 
     protected deactivate(companyId: string, tradeName: string): void {
-        if (!confirm(`Deactivate ${tradeName}? This cannot be undone from the UI.`)) {
+        if (!confirm(this.i18n.t("companies.confirmDeactivate", { name: tradeName }))) {
             return;
         }
         this.companyApi.deactivate(companyId).subscribe({
             next: (company) => {
                 this.companyContext.remember(company);
-                this.toast.success(`${tradeName} deactivated.`);
+                this.toast.success(this.i18n.t("companies.toastDeactivated", { name: tradeName }));
             },
         });
     }
 
     protected select(companyId: string): void {
         this.companyContext.select(companyId);
-        this.toast.info("Active company updated.");
+        this.toast.info(this.i18n.t("companies.toastActiveCompanyUpdated"));
     }
 
     protected forget(companyId: string): void {
