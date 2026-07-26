@@ -8,11 +8,13 @@ import { CashFlowSummary } from "../../../core/models/reporting.model";
 import { NotificationApi } from "../../../core/services/api/notification.api";
 import { ReportApi } from "../../../core/services/api/report.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
+import { TranslationService } from "../../../core/services/translation.service";
 import { EmptyState } from "../../../shared/components/empty-state/empty-state";
+import { TranslatePipe } from "../../../shared/pipes/translate.pipe";
 
 @Component({
     selector: "app-dashboard-page",
-    imports: [RouterLink, EmptyState, DecimalPipe],
+    imports: [RouterLink, EmptyState, DecimalPipe, TranslatePipe],
     templateUrl: "./dashboard-page.html",
     styleUrl: "./dashboard-page.scss",
 })
@@ -20,6 +22,7 @@ export class DashboardPage {
     private readonly reportApi = inject(ReportApi);
     private readonly notificationApi = inject(NotificationApi);
     protected readonly companyContext = inject(CompanyContextService);
+    protected readonly i18n = inject(TranslationService);
 
     private readonly refresh$ = new Subject<void>();
 
