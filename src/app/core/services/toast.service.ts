@@ -1,4 +1,5 @@
 import { Injectable, signal } from "@angular/core";
+import { timer } from "rxjs";
 
 export type ToastKind = "success" | "error" | "info";
 
@@ -32,6 +33,6 @@ export class ToastService {
     private push(kind: ToastKind, message: string): void {
         const id = this.nextId++;
         this.toasts.update((toasts) => [...toasts, { id, kind, message }]);
-        setTimeout(() => this.dismiss(id), 5000);
+        timer(5000).subscribe(() => this.dismiss(id));
     }
 }
