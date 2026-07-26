@@ -7,11 +7,13 @@ import { DocumentType, PartyDto, PartyType } from "../../../core/models/billing.
 import { PartyApi } from "../../../core/services/api/party.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
 import { ToastService } from "../../../core/services/toast.service";
+import { TranslationService } from "../../../core/services/translation.service";
 import { EmptyState } from "../../../shared/components/empty-state/empty-state";
+import { TranslatePipe } from "../../../shared/pipes/translate.pipe";
 
 @Component({
     selector: "app-parties-page",
-    imports: [ReactiveFormsModule, RouterLink, EmptyState],
+    imports: [ReactiveFormsModule, RouterLink, EmptyState, TranslatePipe],
     templateUrl: "./parties-page.html",
     styleUrl: "./parties-page.scss",
 })
@@ -20,6 +22,7 @@ export class PartiesPage {
     private readonly partyApi = inject(PartyApi);
     private readonly toast = inject(ToastService);
     protected readonly companyContext = inject(CompanyContextService);
+    protected readonly i18n = inject(TranslationService);
 
     private readonly reload$ = new Subject<void>();
 
@@ -59,7 +62,7 @@ export class PartiesPage {
             .pipe(finalize(() => this.submitting.set(false)))
             .subscribe({
                 next: (party) => {
-                    this.toast.success(`${party.name} created.`);
+                    this.toast.success(this.i18n.t("parties.toastCreated", { name: party.name }));
                     this.form.reset({ documentType: "CNPJ", type: "CUSTOMER" });
                     this.showForm.set(false);
                     this.reload$.next();
