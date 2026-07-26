@@ -1,7 +1,9 @@
 import { DecimalPipe } from "@angular/common";
-import { Component, effect, inject, signal } from "@angular/core";
+import { Component, inject, signal } from "@angular/core";
+import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterLink } from "@angular/router";
+import { Subject, finalize, merge, of, switchMap } from "rxjs";
 import { BudgetDto, BudgetStatusDto, CategoryDto } from "../../../core/models/accounting.model";
 import { BudgetApi } from "../../../core/services/api/budget.api";
 import { CategoryApi } from "../../../core/services/api/category.api";
@@ -22,8 +24,8 @@ export class BudgetsPage {
     private readonly toast = inject(ToastService);
     protected readonly companyContext = inject(CompanyContextService);
 
-    protected readonly budgets = signal<BudgetDto[]>([]);
-    protected readonly categories = signal<CategoryDto[]>([]);
+    private readonly reload$ = new Subject<void>();
+
     protected readonly statuses = signal<Record<string, BudgetStatusDto>>({});
     protected readonly submitting = signal(false);
     protected readonly showForm = signal(false);
@@ -34,25 +36,25 @@ export class BudgetsPage {
         limit: [0, [Validators.required, Validators.min(0.01)]],
     });
 
+    protected readonly budgets = toSignal(
+        merge(toObservable(this.companyContext.selectedCompany), this.reload$).pipe(
+            switchMap(() => {
+                const company = this.companyContext.selectedCompany();
+                return company ? this.budgetApi.list(company.id) : of([]);
+            }),
+        ),
+        { initialValue: [] as BudgetDto[] },
+    );
+
+    protected readonly categories = toSignal(
+        toObservable(this.companyContext.selectedCompany).pipe(
+            switchMap((company) => (company ? this.categoryApi.list(company.id) : of([]))),
+        ),
+        { initialValue: [] as CategoryDto[] },
+    );
+
     protected get expenseCategories(): CategoryDto[] {
         return this.categories().filter((category) => category.type === "EXPENSE");
-    }
-
-    constructor() {
-        effect(() => {
-            const company = this.companyContext.selectedCompany();
-            if (company) {
-                this.load(company.id);
-                this.categoryApi.list(company.id).subscribe((categories) => this.categories.set(categories));
-            } else {
-                this.budgets.set([]);
-                this.categories.set([]);
-            }
-        });
-    }
-
-    protected load(companyId: string): void {
-        this.budgetApi.list(companyId).subscribe((budgets) => this.budgets.set(budgets));
     }
 
     protected categoryName(categoryId: string): string {
@@ -67,16 +69,20 @@ export class BudgetsPage {
         }
 
         this.submitting.set(true);
-        this.budgetApi.create(company.id, this.form.getRawValue()).subscribe({
-            next: (budget) => {
-                this.budgets.update((budgets) => [...budgets, budget]);
-                this.toast.success("Budget created.");
-                this.form.reset({ period: this.currentMonth(), limit: 0 });
-                this.showForm.set(false);
-                this.submitting.set(false);
-            },
-            error: () => this.submitting.set(false),
-        });
+        this.budgetApi
+            .create(company.id, this.form.getRawValue())
+            .pipe(finalize(() => this.submitting.set(false)))
+            .subscribe({
+                next: () => {
+                    this.toast.success("Budget created.");
+                    this.form.reset({ period: this.currentMonth(), limit: 0 });
+                    this.showForm.set(false);
+                    this.reload$.next();
+                },
+                error: () => {
+                    // error toast is raised globally by the HTTP error interceptor
+                },
+            });
     }
 
     protected loadStatus(budget: BudgetDto): void {
@@ -95,9 +101,9 @@ export class BudgetsPage {
             return;
         }
         this.budgetApi.deactivate(company.id, budget.id).subscribe({
-            next: (updated) => {
-                this.budgets.update((budgets) => budgets.map((b) => (b.id === updated.id ? updated : b)));
+            next: () => {
                 this.toast.success("Budget deactivated.");
+                this.reload$.next();
             },
         });
     }
