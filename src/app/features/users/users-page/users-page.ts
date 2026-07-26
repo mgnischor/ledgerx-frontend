@@ -1,5 +1,6 @@
 import { Component, inject, signal } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { finalize } from "rxjs";
 import { Role, UserDto } from "../../../core/models/identity.model";
 import { UserApi } from "../../../core/services/api/user.api";
 import { ToastService } from "../../../core/services/toast.service";
@@ -36,15 +37,19 @@ export class UsersPage {
         }
 
         this.submitting.set(true);
-        this.userApi.register(this.form.getRawValue()).subscribe({
-            next: (user) => {
-                this.registeredUsers.update((users) => [user, ...users]);
-                this.toast.success(`${user.fullName} registered. Grant a role to enable access.`);
-                this.form.reset();
-                this.submitting.set(false);
-            },
-            error: () => this.submitting.set(false),
-        });
+        this.userApi
+            .register(this.form.getRawValue())
+            .pipe(finalize(() => this.submitting.set(false)))
+            .subscribe({
+                next: (user) => {
+                    this.registeredUsers.update((users) => [user, ...users]);
+                    this.toast.success(`${user.fullName} registered. Grant a role to enable access.`);
+                    this.form.reset();
+                },
+                error: () => {
+                    // error toast is raised globally by the HTTP error interceptor
+                },
+            });
     }
 
     protected grantRoleToUser(): void {
