@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable, computed, signal } from "@angular/core";
-import { firstValueFrom } from "rxjs";
+import { Observable, tap } from "rxjs";
 import { environment } from "../../../environments/environment";
 import { AuthenticationResultDto, LoginRequest, Permission, Role } from "../models/identity.model";
 
@@ -39,20 +39,21 @@ export class AuthService {
         return this.session()?.accessToken ?? null;
     }
 
-    async login(request: LoginRequest): Promise<void> {
-        const result = await firstValueFrom(
-            this.http.post<AuthenticationResultDto>(`${environment.apiUrl}/auth/login`, request),
+    login(request: LoginRequest): Observable<AuthenticationResultDto> {
+        return this.http.post<AuthenticationResultDto>(`${environment.apiUrl}/auth/login`, request).pipe(
+            tap((result) => {
+                const claims = this.decodeClaims(result.accessToken);
+                const session: Session = {
+                    accessToken: result.accessToken,
+                    email: claims.sub || request.email,
+                    roles: claims.roles ?? [],
+                    permissions: claims.permissions ?? [],
+                    expiresAt: Date.now() + result.expiresInSeconds * 1000,
+                };
+                this.session.set(session);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+            }),
         );
-        const claims = this.decodeClaims(result.accessToken);
-        const session: Session = {
-            accessToken: result.accessToken,
-            email: claims.sub || request.email,
-            roles: claims.roles ?? [],
-            permissions: claims.permissions ?? [],
-            expiresAt: Date.now() + result.expiresInSeconds * 1000,
-        };
-        this.session.set(session);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     }
 
     logout(): void {
