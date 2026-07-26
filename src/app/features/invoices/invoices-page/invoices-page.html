@@ -1,60 +1,70 @@
 <div class="page">
     <div class="page-header">
         <div>
-            <h1>Invoices</h1>
-            <p>Accounts receivable and payable, issued in monthly installments.</p>
+            <h1>{{ "invoices.title" | translate }}</h1>
+            <p>{{ "invoices.subtitle" | translate }}</p>
         </div>
         @if (companyContext.selectedCompany()) {
             <button type="button" class="btn btn-primary" (click)="showForm.set(!showForm())">
-                {{ showForm() ? "Cancel" : "+ Issue invoice" }}
+                {{ (showForm() ? "common.cancel" : "invoices.issueInvoice") | translate }}
             </button>
         }
     </div>
 
     @if (!companyContext.selectedCompany()) {
-        <app-empty-state title="No active company selected" description="Select a company to issue invoices.">
-            <a routerLink="/companies" class="btn btn-primary">Go to companies</a>
+        <app-empty-state
+            [title]="'dashboard.emptyCompanyTitle' | translate"
+            [description]="'invoices.emptyCompanyDescription' | translate"
+        >
+            <a routerLink="/companies" class="btn btn-primary">{{ "common.goToCompanies" | translate }}</a>
         </app-empty-state>
     } @else {
         @if (showForm()) {
             <div class="card">
-                <h2 class="card-title">Issue invoice</h2>
+                <h2 class="card-title">{{ "invoices.issueInvoiceTitle" | translate }}</h2>
                 @if (parties().length === 0) {
-                    <app-empty-state title="No parties yet" description="Add a customer or supplier first.">
-                        <a routerLink="/parties" class="btn btn-secondary">Go to parties</a>
+                    <app-empty-state
+                        [title]="'invoices.emptyPartiesTitle' | translate"
+                        [description]="'invoices.emptyPartiesDescription' | translate"
+                    >
+                        <a routerLink="/parties" class="btn btn-secondary">{{ "invoices.goToParties" | translate }}</a>
                     </app-empty-state>
                 } @else {
                     <form [formGroup]="form" (ngSubmit)="submit()">
                         <div class="form-grid">
                             <div class="field">
-                                <label for="partyId">Party</label>
+                                <label for="partyId">{{ "invoices.party" | translate }}</label>
                                 <select id="partyId" formControlName="partyId">
-                                    <option value="" disabled>Select…</option>
+                                    <option value="" disabled>{{ "common.select" | translate }}</option>
                                     @for (party of parties(); track party.id) {
                                         <option [value]="party.id">{{ party.name }}</option>
                                     }
                                 </select>
                             </div>
                             <div class="field">
-                                <label for="direction">Direction</label>
+                                <label for="direction">{{ "invoices.direction" | translate }}</label>
                                 <select id="direction" formControlName="direction">
-                                    <option value="CUSTOMER">Receivable (customer)</option>
-                                    <option value="SUPPLIER">Payable (supplier)</option>
+                                    <option value="CUSTOMER">{{ "invoices.directionReceivable" | translate }}</option>
+                                    <option value="SUPPLIER">{{ "invoices.directionPayable" | translate }}</option>
                                 </select>
                             </div>
                             <div class="field">
-                                <label for="firstDueDate">First due date</label>
+                                <label for="firstDueDate">{{ "invoices.firstDueDate" | translate }}</label>
                                 <input id="firstDueDate" type="date" formControlName="firstDueDate" />
                             </div>
                             <div class="field" style="grid-column: 1 / -1">
-                                <label for="installmentAmounts">Installment amounts (comma-separated, BRL)</label>
-                                <input id="installmentAmounts" formControlName="installmentAmounts" placeholder="500, 500, 500" />
-                                <span class="hint">Up to 60 installments, due monthly starting on the first due date.</span>
+                                <label for="installmentAmounts">{{ "invoices.installmentAmounts" | translate }}</label>
+                                <input
+                                    id="installmentAmounts"
+                                    formControlName="installmentAmounts"
+                                    [attr.placeholder]="'invoices.installmentAmountsPlaceholder' | translate"
+                                />
+                                <span class="hint">{{ "invoices.installmentAmountsHint" | translate }}</span>
                             </div>
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary" [disabled]="submitting()">
-                                {{ submitting() ? "Issuing…" : "Issue invoice" }}
+                                {{ (submitting() ? "invoices.issuing" : "invoices.issueInvoice") | translate }}
                             </button>
                         </div>
                     </form>
@@ -64,20 +74,23 @@
 
         <div class="card">
             <div class="card-header">
-                <h2>Invoices issued this session</h2>
+                <h2>{{ "invoices.sessionTitle" | translate }}</h2>
             </div>
             @if (issuedInvoices().length === 0) {
-                <app-empty-state title="No invoices issued yet" description="Invoices you issue in this browser session appear here." />
+                <app-empty-state
+                    [title]="'invoices.emptySessionTitle' | translate"
+                    [description]="'invoices.emptySessionDescription' | translate"
+                />
             } @else {
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
-                                <th>Invoice ID</th>
-                                <th>Party</th>
-                                <th>Direction</th>
-                                <th>Status</th>
-                                <th>Installments</th>
+                                <th>{{ "invoices.colInvoiceId" | translate }}</th>
+                                <th>{{ "invoices.colParty" | translate }}</th>
+                                <th>{{ "invoices.colDirection" | translate }}</th>
+                                <th>{{ "common.status" | translate }}</th>
+                                <th>{{ "invoices.colInstallments" | translate }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -85,8 +98,10 @@
                                 <tr>
                                     <td class="mono">{{ invoice.id }}</td>
                                     <td>{{ partyName(invoice.partyId) }}</td>
-                                    <td>{{ invoice.direction }}</td>
-                                    <td><span class="badge badge-info">{{ invoice.status }}</span></td>
+                                    <td>{{ "enums.partyType." + invoice.direction | translate }}</td>
+                                    <td>
+                                        <span class="badge badge-info">{{ "enums.invoiceStatus." + invoice.status | translate }}</span>
+                                    </td>
                                     <td>{{ invoice.installmentCount }}</td>
                                 </tr>
                             }
@@ -98,17 +113,17 @@
 
         <div class="card">
             <div class="card-header">
-                <h2>Look up an invoice</h2>
+                <h2>{{ "invoices.lookupTitle" | translate }}</h2>
             </div>
             <div class="row">
                 <input
-                    placeholder="Invoice ID"
+                    [attr.placeholder]="'invoices.lookupPlaceholder' | translate"
                     [value]="lookupId()"
                     (input)="lookupId.set($any($event.target).value)"
                     style="max-width: 340px"
                 />
                 <button type="button" class="btn btn-secondary" [disabled]="looking()" (click)="lookup()">
-                    {{ looking() ? "Looking up…" : "Look up" }}
+                    {{ (looking() ? "invoices.lookingUp" : "invoices.lookUp") | translate }}
                 </button>
             </div>
 
@@ -116,27 +131,35 @@
                 <hr class="divider" />
                 <div class="stack">
                     <div class="row">
-                        <span class="badge badge-info">{{ invoice.status }}</span>
-                        <span class="text-muted">{{ invoice.installmentCount }} installment(s) · {{ invoice.direction }}</span>
+                        <span class="badge badge-info">{{ "enums.invoiceStatus." + invoice.status | translate }}</span>
+                        <span class="text-muted">
+                            {{
+                                "invoices.installmentsSummary"
+                                    | translate: { count: invoice.installmentCount, direction: ("enums.partyType." + invoice.direction | translate) }
+                            }}
+                        </span>
                     </div>
 
                     <div class="grid grid-cols-2">
                         <div class="field">
-                            <label>Register a payment</label>
-                            <p class="hint">
-                                The API does not expose installment IDs on the invoice, so paste the installment ID
-                                you received when the invoice was issued (see Swagger response) or from your records.
-                            </p>
-                            <input placeholder="Installment ID" [value]="installmentId()" (input)="installmentId.set($any($event.target).value)" />
+                            <label>{{ "invoices.registerPaymentLabel" | translate }}</label>
+                            <p class="hint">{{ "invoices.registerPaymentHint" | translate }}</p>
+                            <input
+                                [attr.placeholder]="'invoices.installmentIdPlaceholder' | translate"
+                                [value]="installmentId()"
+                                (input)="installmentId.set($any($event.target).value)"
+                            />
                             <input type="date" [value]="paidOn()" (change)="paidOn.set($any($event.target).value)" />
                             <button type="button" class="btn btn-primary btn-sm" (click)="registerPayment()">
-                                Register payment
+                                {{ "invoices.registerPayment" | translate }}
                             </button>
                         </div>
                         <div class="field">
-                            <label>Cancel invoice</label>
-                            <p class="hint">A fully paid invoice cannot be canceled.</p>
-                            <button type="button" class="btn btn-danger btn-sm" (click)="cancel()">Cancel invoice</button>
+                            <label>{{ "invoices.cancelInvoiceLabel" | translate }}</label>
+                            <p class="hint">{{ "invoices.cancelInvoiceHint" | translate }}</p>
+                            <button type="button" class="btn btn-danger btn-sm" (click)="cancel()">
+                                {{ "invoices.cancelInvoice" | translate }}
+                            </button>
                         </div>
                     </div>
                 </div>
