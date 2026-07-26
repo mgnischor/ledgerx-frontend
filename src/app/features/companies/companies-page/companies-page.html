@@ -1,72 +1,92 @@
 <div class="page">
     <div class="page-header">
         <div>
-            <h1>Companies</h1>
-            <p>Register the companies your team manages in LedgerX.</p>
+            <h1>{{ "companies.title" | translate }}</h1>
+            <p>{{ "companies.subtitle" | translate }}</p>
         </div>
         <button type="button" class="btn btn-primary" (click)="showForm.set(!showForm())">
-            {{ showForm() ? "Cancel" : "+ Register company" }}
+            {{ (showForm() ? "common.cancel" : "companies.registerCompany") | translate }}
         </button>
     </div>
 
     @if (showForm()) {
         <div class="card">
-            <h2 class="card-title">New company</h2>
+            <h2 class="card-title">{{ "companies.newCompany" | translate }}</h2>
             <form [formGroup]="form" (ngSubmit)="submit()">
                 <div class="form-grid">
                     <div class="field">
-                        <label for="legalName">Legal name</label>
-                        <input id="legalName" formControlName="legalName" placeholder="Acme Ltda." />
+                        <label for="legalName">{{ "companies.legalName" | translate }}</label>
+                        <input
+                            id="legalName"
+                            formControlName="legalName"
+                            [attr.placeholder]="'companies.legalNamePlaceholder' | translate"
+                        />
                     </div>
                     <div class="field">
-                        <label for="tradeName">Trade name</label>
-                        <input id="tradeName" formControlName="tradeName" placeholder="Acme" />
+                        <label for="tradeName">{{ "companies.tradeName" | translate }}</label>
+                        <input
+                            id="tradeName"
+                            formControlName="tradeName"
+                            [attr.placeholder]="'companies.tradeNamePlaceholder' | translate"
+                        />
                     </div>
                     <div class="field">
-                        <label for="cnpj">CNPJ</label>
-                        <input id="cnpj" formControlName="cnpj" placeholder="00.000.000/0001-00" />
+                        <label for="cnpj">{{ "companies.cnpj" | translate }}</label>
+                        <input id="cnpj" formControlName="cnpj" [attr.placeholder]="'companies.cnpjPlaceholder' | translate" />
                     </div>
                     <div class="field">
-                        <label for="size">Company size</label>
+                        <label for="size">{{ "companies.companySize" | translate }}</label>
                         <select id="size" formControlName="size">
                             @for (size of sizes; track size) {
-                                <option [value]="size">{{ size }}</option>
+                                <option [value]="size">{{ "enums.companySize." + size | translate }}</option>
                             }
                         </select>
                     </div>
                     <div class="field">
-                        <label for="street">Street</label>
-                        <input id="street" formControlName="street" placeholder="Av. Paulista" />
+                        <label for="street">{{ "companies.street" | translate }}</label>
+                        <input
+                            id="street"
+                            formControlName="street"
+                            [attr.placeholder]="'companies.streetPlaceholder' | translate"
+                        />
                     </div>
                     <div class="field">
-                        <label for="number">Number</label>
-                        <input id="number" formControlName="number" placeholder="1000" />
+                        <label for="number">{{ "companies.number" | translate }}</label>
+                        <input
+                            id="number"
+                            formControlName="number"
+                            [attr.placeholder]="'companies.numberPlaceholder' | translate"
+                        />
                     </div>
                     <div class="field">
-                        <label for="city">City</label>
-                        <input id="city" formControlName="city" placeholder="São Paulo" />
+                        <label for="city">{{ "companies.city" | translate }}</label>
+                        <input id="city" formControlName="city" [attr.placeholder]="'companies.cityPlaceholder' | translate" />
                     </div>
                     <div class="field">
-                        <label for="state">State (UF)</label>
+                        <label for="state">{{ "companies.state" | translate }}</label>
                         <select id="state" formControlName="state">
-                            <option value="" disabled>Select…</option>
+                            <option value="" disabled>{{ "common.select" | translate }}</option>
                             @for (state of states; track state) {
                                 <option [value]="state">{{ state }}</option>
                             }
                         </select>
                     </div>
                     <div class="field">
-                        <label for="zipCode">Zip code</label>
-                        <input id="zipCode" formControlName="zipCode" placeholder="01310-100" />
+                        <label for="zipCode">{{ "companies.zipCode" | translate }}</label>
+                        <input
+                            id="zipCode"
+                            formControlName="zipCode"
+                            [attr.placeholder]="'companies.zipCodePlaceholder' | translate"
+                        />
                     </div>
                     <div class="field">
-                        <label for="country">Country</label>
+                        <label for="country">{{ "companies.country" | translate }}</label>
                         <input id="country" formControlName="country" />
                     </div>
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary" [disabled]="submitting()">
-                        {{ submitting() ? "Saving…" : "Register company" }}
+                        {{ (submitting() ? "companies.saving" : "companies.registerCompany") | translate }}
                     </button>
                 </div>
             </form>
@@ -75,28 +95,25 @@
 
     <div class="card">
         <div class="card-header">
-            <h2>Known companies</h2>
+            <h2>{{ "companies.knownCompaniesTitle" | translate }}</h2>
         </div>
-        <p class="text-muted hint">
-            The LedgerX API does not expose a company listing endpoint, so companies you register or select show up
-            here for this browser only.
-        </p>
+        <p class="text-muted hint">{{ "companies.knownCompaniesHint" | translate }}</p>
 
         @if (companyContext.knownCompanies().length === 0) {
             <app-empty-state
-                title="No companies yet"
-                description="Register a company above to get started, or select one to make it the active context for the rest of the app."
+                [title]="'companies.emptyTitle' | translate"
+                [description]="'companies.emptyDescription' | translate"
             />
         } @else {
             <div class="table-wrap">
                 <table>
                     <thead>
                         <tr>
-                            <th>Trade name</th>
-                            <th>Legal name</th>
-                            <th>CNPJ</th>
-                            <th>Size</th>
-                            <th>Status</th>
+                            <th>{{ "companies.colTradeName" | translate }}</th>
+                            <th>{{ "companies.colLegalName" | translate }}</th>
+                            <th>{{ "companies.colCnpj" | translate }}</th>
+                            <th>{{ "companies.colSize" | translate }}</th>
+                            <th>{{ "common.status" | translate }}</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -106,20 +123,20 @@
                                 <td>
                                     <strong>{{ company.tradeName }}</strong>
                                     @if (companyContext.selectedCompany()?.id === company.id) {
-                                        <span class="badge badge-info">Active</span>
+                                        <span class="badge badge-info">{{ "common.active" | translate }}</span>
                                     }
                                 </td>
                                 <td>{{ company.legalName }}</td>
                                 <td class="mono">{{ company.cnpj }}</td>
-                                <td>{{ company.size }}</td>
+                                <td>{{ "enums.companySize." + company.size | translate }}</td>
                                 <td>
                                     <span class="badge" [class.badge-success]="company.active" [class.badge-neutral]="!company.active">
-                                        {{ company.active ? "Active" : "Inactive" }}
+                                        {{ (company.active ? "common.active" : "common.inactive") | translate }}
                                     </span>
                                 </td>
                                 <td class="row">
                                     <button type="button" class="btn btn-secondary btn-sm" (click)="select(company.id)">
-                                        Use
+                                        {{ "common.use" | translate }}
                                     </button>
                                     @if (company.active) {
                                         <button
@@ -127,11 +144,11 @@
                                             class="btn btn-danger btn-sm"
                                             (click)="deactivate(company.id, company.tradeName)"
                                         >
-                                            Deactivate
+                                            {{ "common.deactivate" | translate }}
                                         </button>
                                     }
                                     <button type="button" class="btn btn-ghost btn-sm" (click)="forget(company.id)">
-                                        Forget
+                                        {{ "common.forget" | translate }}
                                     </button>
                                 </td>
                             </tr>
