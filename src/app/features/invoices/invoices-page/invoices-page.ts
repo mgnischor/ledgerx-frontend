@@ -1,6 +1,8 @@
-import { Component, effect, inject, signal } from "@angular/core";
+import { Component, inject, signal } from "@angular/core";
+import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute, RouterLink } from "@angular/router";
+import { Subject, catchError, finalize, of, switchMap } from "rxjs";
 import { InvoiceDto, PartyDto, PartyType } from "../../../core/models/billing.model";
 import { InvoiceApi } from "../../../core/services/api/invoice.api";
 import { PartyApi } from "../../../core/services/api/party.api";
@@ -22,14 +24,14 @@ export class InvoicesPage {
     private readonly route = inject(ActivatedRoute);
     protected readonly companyContext = inject(CompanyContextService);
 
+    private readonly lookup$ = new Subject<string>();
+
     protected readonly directions: PartyType[] = ["CUSTOMER", "SUPPLIER"];
-    protected readonly parties = signal<PartyDto[]>([]);
     protected readonly issuedInvoices = signal<InvoiceDto[]>([]);
     protected readonly submitting = signal(false);
     protected readonly showForm = signal(false);
 
     protected readonly lookupId = signal("");
-    protected readonly lookedUpInvoice = signal<InvoiceDto | null>(null);
     protected readonly looking = signal(false);
     protected readonly installmentId = signal("");
     protected readonly paidOn = signal(this.today());
@@ -41,16 +43,27 @@ export class InvoicesPage {
         installmentAmounts: ["", [Validators.required]],
     });
 
-    constructor() {
-        effect(() => {
-            const company = this.companyContext.selectedCompany();
-            if (company) {
-                this.partyApi.list(company.id).subscribe((parties) => this.parties.set(parties));
-            } else {
-                this.parties.set([]);
-            }
-        });
+    protected readonly parties = toSignal(
+        toObservable(this.companyContext.selectedCompany).pipe(
+            switchMap((company) => (company ? this.partyApi.list(company.id) : of([]))),
+        ),
+        { initialValue: [] as PartyDto[] },
+    );
 
+    protected readonly lookedUpInvoice = toSignal(
+        this.lookup$.pipe(
+            switchMap((id) => {
+                this.looking.set(true);
+                return this.invoiceApi.getById(id).pipe(
+                    catchError(() => of(null)),
+                    finalize(() => this.looking.set(false)),
+                );
+            }),
+        ),
+        { initialValue: null as InvoiceDto | null },
+    );
+
+    constructor() {
         const partyId = this.route.snapshot.queryParamMap.get("partyId");
         if (partyId) {
             this.form.patchValue({ partyId });
@@ -84,34 +97,25 @@ export class InvoicesPage {
         const { partyId, direction, firstDueDate } = this.form.getRawValue();
         this.invoiceApi
             .issue({ companyId: company.id, partyId, direction, installmentAmounts: amounts, firstDueDate })
+            .pipe(finalize(() => this.submitting.set(false)))
             .subscribe({
                 next: (invoice) => {
                     this.issuedInvoices.update((invoices) => [invoice, ...invoices]);
                     this.toast.success(`Invoice issued with ${invoice.installmentCount} installment(s).`);
                     this.form.reset({ direction: "CUSTOMER", firstDueDate: this.today(), installmentAmounts: "" });
                     this.showForm.set(false);
-                    this.submitting.set(false);
                 },
-                error: () => this.submitting.set(false),
+                error: () => {
+                    // error toast is raised globally by the HTTP error interceptor
+                },
             });
     }
 
     protected lookup(): void {
         const id = this.lookupId().trim();
-        if (!id) {
-            return;
+        if (id) {
+            this.lookup$.next(id);
         }
-        this.looking.set(true);
-        this.invoiceApi.getById(id).subscribe({
-            next: (invoice) => {
-                this.lookedUpInvoice.set(invoice);
-                this.looking.set(false);
-            },
-            error: () => {
-                this.lookedUpInvoice.set(null);
-                this.looking.set(false);
-            },
-        });
     }
 
     protected registerPayment(): void {
@@ -121,9 +125,9 @@ export class InvoicesPage {
             return;
         }
         this.invoiceApi.registerPayment(invoice.id, { installmentId, paidOn: this.paidOn() }).subscribe({
-            next: (updated) => {
-                this.lookedUpInvoice.set(updated);
+            next: () => {
                 this.toast.success("Payment registered.");
+                this.lookup$.next(invoice.id);
             },
         });
     }
@@ -134,9 +138,9 @@ export class InvoicesPage {
             return;
         }
         this.invoiceApi.cancel(invoice.id).subscribe({
-            next: (updated) => {
-                this.lookedUpInvoice.set(updated);
+            next: () => {
                 this.toast.success("Invoice canceled.");
+                this.lookup$.next(invoice.id);
             },
         });
     }
