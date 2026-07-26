@@ -2,7 +2,12 @@
     @for (toast of toastService.toasts(); track toast.id) {
         <div class="toast" [class]="'toast-' + toast.kind">
             <span>{{ toast.message }}</span>
-            <button type="button" class="toast-close" (click)="toastService.dismiss(toast.id)" aria-label="Dismiss">
+            <button
+                type="button"
+                class="toast-close"
+                (click)="toastService.dismiss(toast.id)"
+                [attr.aria-label]="'common.dismiss' | translate"
+            >
                 ×
             </button>
         </div>
