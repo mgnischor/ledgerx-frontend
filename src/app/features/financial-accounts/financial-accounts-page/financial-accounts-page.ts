@@ -1,7 +1,9 @@
 import { DecimalPipe } from "@angular/common";
-import { Component, effect, inject, signal } from "@angular/core";
+import { Component, inject, signal } from "@angular/core";
+import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterLink } from "@angular/router";
+import { Subject, finalize, merge, of, switchMap } from "rxjs";
 import { FinancialAccountDto } from "../../../core/models/accounting.model";
 import { FinancialAccountApi } from "../../../core/services/api/financial-account.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
@@ -20,8 +22,8 @@ export class FinancialAccountsPage {
     private readonly toast = inject(ToastService);
     protected readonly companyContext = inject(CompanyContextService);
 
-    protected readonly accounts = signal<FinancialAccountDto[]>([]);
-    protected readonly loading = signal(false);
+    private readonly reload$ = new Subject<void>();
+
     protected readonly submitting = signal(false);
     protected readonly showForm = signal(false);
 
@@ -30,27 +32,15 @@ export class FinancialAccountsPage {
         openingBalance: [0, [Validators.required, Validators.min(0)]],
     });
 
-    constructor() {
-        effect(() => {
-            const company = this.companyContext.selectedCompany();
-            if (company) {
-                this.load(company.id);
-            } else {
-                this.accounts.set([]);
-            }
-        });
-    }
-
-    protected load(companyId: string): void {
-        this.loading.set(true);
-        this.financialAccountApi.list(companyId).subscribe({
-            next: (accounts) => {
-                this.accounts.set(accounts);
-                this.loading.set(false);
-            },
-            error: () => this.loading.set(false),
-        });
-    }
+    protected readonly accounts = toSignal(
+        merge(toObservable(this.companyContext.selectedCompany), this.reload$).pipe(
+            switchMap(() => {
+                const company = this.companyContext.selectedCompany();
+                return company ? this.financialAccountApi.list(company.id) : of([]);
+            }),
+        ),
+        { initialValue: [] as FinancialAccountDto[] },
+    );
 
     protected submit(): void {
         const company = this.companyContext.selectedCompany();
@@ -61,16 +51,20 @@ export class FinancialAccountsPage {
 
         this.submitting.set(true);
         const { name, openingBalance } = this.form.getRawValue();
-        this.financialAccountApi.create(company.id, { companyId: company.id, name, openingBalance }).subscribe({
-            next: (account) => {
-                this.accounts.update((accounts) => [...accounts, account]);
-                this.toast.success(`${account.name} created.`);
-                this.form.reset({ openingBalance: 0 });
-                this.showForm.set(false);
-                this.submitting.set(false);
-            },
-            error: () => this.submitting.set(false),
-        });
+        this.financialAccountApi
+            .create(company.id, { companyId: company.id, name, openingBalance })
+            .pipe(finalize(() => this.submitting.set(false)))
+            .subscribe({
+                next: (account) => {
+                    this.toast.success(`${account.name} created.`);
+                    this.form.reset({ openingBalance: 0 });
+                    this.showForm.set(false);
+                    this.reload$.next();
+                },
+                error: () => {
+                    // error toast is raised globally by the HTTP error interceptor
+                },
+            });
     }
 
     protected deactivate(account: FinancialAccountDto): void {
@@ -79,9 +73,9 @@ export class FinancialAccountsPage {
             return;
         }
         this.financialAccountApi.deactivate(company.id, account.id).subscribe({
-            next: (updated) => {
-                this.accounts.update((accounts) => accounts.map((a) => (a.id === updated.id ? updated : a)));
+            next: () => {
                 this.toast.success(`${account.name} deactivated.`);
+                this.reload$.next();
             },
         });
     }
