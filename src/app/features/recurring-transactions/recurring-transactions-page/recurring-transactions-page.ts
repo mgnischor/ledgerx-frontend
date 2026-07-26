@@ -1,6 +1,8 @@
-import { Component, effect, inject, signal } from "@angular/core";
+import { Component, inject, signal } from "@angular/core";
+import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterLink } from "@angular/router";
+import { Subject, finalize, merge, of, switchMap } from "rxjs";
 import {
     CategoryDto,
     FinancialAccountDto,
@@ -29,11 +31,10 @@ export class RecurringTransactionsPage {
     private readonly toast = inject(ToastService);
     protected readonly companyContext = inject(CompanyContextService);
 
+    private readonly reload$ = new Subject<void>();
+
     protected readonly types: TransactionType[] = ["INCOME", "EXPENSE"];
     protected readonly frequencies: RecurrenceFrequency[] = ["WEEKLY", "MONTHLY", "YEARLY"];
-    protected readonly rules = signal<RecurringTransactionRuleDto[]>([]);
-    protected readonly accounts = signal<FinancialAccountDto[]>([]);
-    protected readonly categories = signal<CategoryDto[]>([]);
     protected readonly submitting = signal(false);
     protected readonly generating = signal(false);
     protected readonly showForm = signal(false);
@@ -48,20 +49,29 @@ export class RecurringTransactionsPage {
         firstOccurrence: [this.today(), [Validators.required]],
     });
 
-    constructor() {
-        effect(() => {
-            const company = this.companyContext.selectedCompany();
-            if (company) {
-                this.load(company.id);
-                this.financialAccountApi.list(company.id).subscribe((accounts) => this.accounts.set(accounts));
-                this.categoryApi.list(company.id).subscribe((categories) => this.categories.set(categories));
-            } else {
-                this.rules.set([]);
-                this.accounts.set([]);
-                this.categories.set([]);
-            }
-        });
-    }
+    protected readonly rules = toSignal(
+        merge(toObservable(this.companyContext.selectedCompany), this.reload$).pipe(
+            switchMap(() => {
+                const company = this.companyContext.selectedCompany();
+                return company ? this.recurringApi.list(company.id) : of([]);
+            }),
+        ),
+        { initialValue: [] as RecurringTransactionRuleDto[] },
+    );
+
+    protected readonly accounts = toSignal(
+        toObservable(this.companyContext.selectedCompany).pipe(
+            switchMap((company) => (company ? this.financialAccountApi.list(company.id) : of([]))),
+        ),
+        { initialValue: [] as FinancialAccountDto[] },
+    );
+
+    protected readonly categories = toSignal(
+        toObservable(this.companyContext.selectedCompany).pipe(
+            switchMap((company) => (company ? this.categoryApi.list(company.id) : of([]))),
+        ),
+        { initialValue: [] as CategoryDto[] },
+    );
 
     protected filteredCategories(type: TransactionType): CategoryDto[] {
         return this.categories().filter((category) => category.type === type);
@@ -75,10 +85,6 @@ export class RecurringTransactionsPage {
         return this.categories().find((c) => c.id === categoryId)?.name ?? categoryId;
     }
 
-    protected load(companyId: string): void {
-        this.recurringApi.list(companyId).subscribe((rules) => this.rules.set(rules));
-    }
-
     protected submit(): void {
         const company = this.companyContext.selectedCompany();
         if (!company || this.form.invalid || this.submitting()) {
@@ -88,16 +94,25 @@ export class RecurringTransactionsPage {
 
         this.submitting.set(true);
         const value = this.form.getRawValue();
-        this.recurringApi.create(company.id, { ...value, description: value.description || undefined }).subscribe({
-            next: (rule) => {
-                this.rules.update((rules) => [...rules, rule]);
-                this.toast.success("Recurring rule created.");
-                this.form.reset({ type: "EXPENSE", amount: 0, frequency: "MONTHLY", firstOccurrence: this.today() });
-                this.showForm.set(false);
-                this.submitting.set(false);
-            },
-            error: () => this.submitting.set(false),
-        });
+        this.recurringApi
+            .create(company.id, { ...value, description: value.description || undefined })
+            .pipe(finalize(() => this.submitting.set(false)))
+            .subscribe({
+                next: () => {
+                    this.toast.success("Recurring rule created.");
+                    this.form.reset({
+                        type: "EXPENSE",
+                        amount: 0,
+                        frequency: "MONTHLY",
+                        firstOccurrence: this.today(),
+                    });
+                    this.showForm.set(false);
+                    this.reload$.next();
+                },
+                error: () => {
+                    // error toast is raised globally by the HTTP error interceptor
+                },
+            });
     }
 
     protected generateDue(): void {
@@ -106,14 +121,18 @@ export class RecurringTransactionsPage {
             return;
         }
         this.generating.set(true);
-        this.recurringApi.generateDue(company.id).subscribe({
-            next: () => {
-                this.toast.success("Due recurring transactions generated.");
-                this.generating.set(false);
-                this.load(company.id);
-            },
-            error: () => this.generating.set(false),
-        });
+        this.recurringApi
+            .generateDue(company.id)
+            .pipe(finalize(() => this.generating.set(false)))
+            .subscribe({
+                next: () => {
+                    this.toast.success("Due recurring transactions generated.");
+                    this.reload$.next();
+                },
+                error: () => {
+                    // error toast is raised globally by the HTTP error interceptor
+                },
+            });
     }
 
     protected deactivate(rule: RecurringTransactionRuleDto): void {
@@ -122,9 +141,9 @@ export class RecurringTransactionsPage {
             return;
         }
         this.recurringApi.deactivate(company.id, rule.id).subscribe({
-            next: (updated) => {
-                this.rules.update((rules) => rules.map((r) => (r.id === updated.id ? updated : r)));
+            next: () => {
                 this.toast.success("Recurring rule deactivated.");
+                this.reload$.next();
             },
         });
     }
