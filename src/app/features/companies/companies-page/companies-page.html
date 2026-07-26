@@ -1,0 +1,144 @@
+<div class="page">
+    <div class="page-header">
+        <div>
+            <h1>Companies</h1>
+            <p>Register the companies your team manages in LedgerX.</p>
+        </div>
+        <button type="button" class="btn btn-primary" (click)="showForm.set(!showForm())">
+            {{ showForm() ? "Cancel" : "+ Register company" }}
+        </button>
+    </div>
+
+    @if (showForm()) {
+        <div class="card">
+            <h2 class="card-title">New company</h2>
+            <form [formGroup]="form" (ngSubmit)="submit()">
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="legalName">Legal name</label>
+                        <input id="legalName" formControlName="legalName" placeholder="Acme Ltda." />
+                    </div>
+                    <div class="field">
+                        <label for="tradeName">Trade name</label>
+                        <input id="tradeName" formControlName="tradeName" placeholder="Acme" />
+                    </div>
+                    <div class="field">
+                        <label for="cnpj">CNPJ</label>
+                        <input id="cnpj" formControlName="cnpj" placeholder="00.000.000/0001-00" />
+                    </div>
+                    <div class="field">
+                        <label for="size">Company size</label>
+                        <select id="size" formControlName="size">
+                            @for (size of sizes; track size) {
+                                <option [value]="size">{{ size }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="street">Street</label>
+                        <input id="street" formControlName="street" placeholder="Av. Paulista" />
+                    </div>
+                    <div class="field">
+                        <label for="number">Number</label>
+                        <input id="number" formControlName="number" placeholder="1000" />
+                    </div>
+                    <div class="field">
+                        <label for="city">City</label>
+                        <input id="city" formControlName="city" placeholder="São Paulo" />
+                    </div>
+                    <div class="field">
+                        <label for="state">State (UF)</label>
+                        <select id="state" formControlName="state">
+                            <option value="" disabled>Select…</option>
+                            @for (state of states; track state) {
+                                <option [value]="state">{{ state }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="zipCode">Zip code</label>
+                        <input id="zipCode" formControlName="zipCode" placeholder="01310-100" />
+                    </div>
+                    <div class="field">
+                        <label for="country">Country</label>
+                        <input id="country" formControlName="country" />
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+                        {{ submitting() ? "Saving…" : "Register company" }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Known companies</h2>
+        </div>
+        <p class="text-muted hint">
+            The LedgerX API does not expose a company listing endpoint, so companies you register or select show up
+            here for this browser only.
+        </p>
+
+        @if (companyContext.knownCompanies().length === 0) {
+            <app-empty-state
+                title="No companies yet"
+                description="Register a company above to get started, or select one to make it the active context for the rest of the app."
+            />
+        } @else {
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Trade name</th>
+                            <th>Legal name</th>
+                            <th>CNPJ</th>
+                            <th>Size</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (company of companyContext.knownCompanies(); track company.id) {
+                            <tr>
+                                <td>
+                                    <strong>{{ company.tradeName }}</strong>
+                                    @if (companyContext.selectedCompany()?.id === company.id) {
+                                        <span class="badge badge-info">Active</span>
+                                    }
+                                </td>
+                                <td>{{ company.legalName }}</td>
+                                <td class="mono">{{ company.cnpj }}</td>
+                                <td>{{ company.size }}</td>
+                                <td>
+                                    <span class="badge" [class.badge-success]="company.active" [class.badge-neutral]="!company.active">
+                                        {{ company.active ? "Active" : "Inactive" }}
+                                    </span>
+                                </td>
+                                <td class="row">
+                                    <button type="button" class="btn btn-secondary btn-sm" (click)="select(company.id)">
+                                        Use
+                                    </button>
+                                    @if (company.active) {
+                                        <button
+                                            type="button"
+                                            class="btn btn-danger btn-sm"
+                                            (click)="deactivate(company.id, company.tradeName)"
+                                        >
+                                            Deactivate
+                                        </button>
+                                    }
+                                    <button type="button" class="btn btn-ghost btn-sm" (click)="forget(company.id)">
+                                        Forget
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

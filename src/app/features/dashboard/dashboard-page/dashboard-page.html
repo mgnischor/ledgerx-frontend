@@ -1,0 +1,83 @@
+<div class="page">
+    <div class="page-header">
+        <div>
+            <h1>Dashboard</h1>
+            <p>Cash-flow overview and recent activity.</p>
+        </div>
+    </div>
+
+    @if (!companyContext.selectedCompany()) {
+        <app-empty-state
+            title="No active company selected"
+            description="Register or select a company to see its cash-flow summary."
+        >
+            <a routerLink="/companies" class="btn btn-primary">Go to companies</a>
+        </app-empty-state>
+    } @else {
+        <div class="card">
+            <div class="row">
+                <div class="field">
+                    <label for="from">From</label>
+                    <input id="from" type="date" [value]="from()" (change)="from.set($any($event.target).value)" />
+                </div>
+                <div class="field">
+                    <label for="to">To</label>
+                    <input id="to" type="date" [value]="to()" (change)="to.set($any($event.target).value)" />
+                </div>
+                <button type="button" class="btn btn-secondary" (click)="applyRange()">Refresh</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3">
+            <div class="stat-tile">
+                <div class="stat-label">Total income</div>
+                <div class="stat-value">{{ summary()?.totalIncome ?? 0 | number: "1.2-2" }}</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Total expense</div>
+                <div class="stat-value">{{ summary()?.totalExpense ?? 0 | number: "1.2-2" }}</div>
+            </div>
+            <div class="stat-tile" [class.positive]="netPositive()" [class.negative]="!netPositive()">
+                <div class="stat-label">Net result</div>
+                <div class="stat-value">{{ summary()?.netResult ?? 0 | number: "1.2-2" }}</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3">
+            <a routerLink="/transactions" class="card quick-link">
+                <strong>Record a transaction</strong>
+                <span class="text-muted">Log income or expense</span>
+            </a>
+            <a routerLink="/financial-accounts" class="card quick-link">
+                <strong>Financial accounts</strong>
+                <span class="text-muted">Manage cash and bank accounts</span>
+            </a>
+            <a routerLink="/invoices" class="card quick-link">
+                <strong>Invoices</strong>
+                <span class="text-muted">Accounts receivable and payable</span>
+            </a>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Recent notifications</h2>
+            <a routerLink="/notifications" class="btn btn-ghost btn-sm">View all</a>
+        </div>
+        @if (notifications().length === 0) {
+            <app-empty-state title="No notifications yet" />
+        } @else {
+            <div class="stack">
+                @for (notification of notifications(); track notification.id) {
+                    <div class="notification-row">
+                        <span class="badge badge-neutral">{{ notification.type }}</span>
+                        <span>{{ notification.message }}</span>
+                        @if (!notification.read) {
+                            <span class="badge badge-info">New</span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,64 @@
+<div class="shell" [class.sidebar-open]="sidebarOpen()">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-mark">Lx</div>
+            <span>LedgerX</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            @for (item of navItems; track item.path) {
+                <a [routerLink]="item.path" routerLinkActive="active" class="nav-link">
+                    {{ item.label }}
+                    @if (item.path === "/notifications" && unreadCount() > 0) {
+                        <span class="nav-badge">{{ unreadCount() }}</span>
+                    }
+                </a>
+            }
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-chip">
+                <span class="avatar">{{ initials(authService.currentEmail()) }}</span>
+                <div class="user-meta">
+                    <span class="user-email">{{ authService.currentEmail() }}</span>
+                    <span class="user-roles">{{ authService.roles().join(", ") || "No role" }}</span>
+                </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" (click)="logout()">Sign out</button>
+        </div>
+    </aside>
+
+    <div class="shell-main">
+        <header class="topbar">
+            <button type="button" class="icon-btn sidebar-toggle" (click)="toggleSidebar()" aria-label="Toggle menu">
+                ☰
+            </button>
+
+            <div class="company-picker">
+                <label>Active company</label>
+                <select
+                    [value]="companyContext.selectedCompany()?.id ?? ''"
+                    (change)="selectCompany($any($event.target).value)"
+                >
+                    <option value="" disabled>Select a company…</option>
+                    @for (company of companyContext.knownCompanies(); track company.id) {
+                        <option [value]="company.id">{{ company.tradeName }}</option>
+                    }
+                </select>
+            </div>
+
+            <div class="spacer"></div>
+
+            <a routerLink="/notifications" class="icon-btn" aria-label="Notifications">
+                🔔
+                @if (unreadCount() > 0) {
+                    <span class="topbar-badge">{{ unreadCount() }}</span>
+                }
+            </a>
+        </header>
+
+        <main class="shell-content">
+            <router-outlet />
+        </main>
+    </div>
+</div>

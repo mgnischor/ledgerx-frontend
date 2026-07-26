@@ -1,0 +1,101 @@
+<div class="page">
+    <div class="page-header">
+        <div>
+            <h1>Parties</h1>
+            <p>Customers and suppliers linked to the active company.</p>
+        </div>
+        @if (companyContext.selectedCompany()) {
+            <button type="button" class="btn btn-primary" (click)="showForm.set(!showForm())">
+                {{ showForm() ? "Cancel" : "+ New party" }}
+            </button>
+        }
+    </div>
+
+    @if (!companyContext.selectedCompany()) {
+        <app-empty-state title="No active company selected" description="Select a company to manage parties.">
+            <a routerLink="/companies" class="btn btn-primary">Go to companies</a>
+        </app-empty-state>
+    } @else {
+        @if (showForm()) {
+            <div class="card">
+                <h2 class="card-title">New party</h2>
+                <form [formGroup]="form" (ngSubmit)="submit()">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="name">Name</label>
+                            <input id="name" formControlName="name" placeholder="Party legal or trade name" />
+                        </div>
+                        <div class="field">
+                            <label for="type">Type</label>
+                            <select id="type" formControlName="type">
+                                @for (type of partyTypes; track type) {
+                                    <option [value]="type">{{ type }}</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="documentType">Document type</label>
+                            <select id="documentType" formControlName="documentType">
+                                @for (type of documentTypes; track type) {
+                                    <option [value]="type">{{ type }}</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="document">Document number</label>
+                            <input id="document" formControlName="document" placeholder="CPF or CNPJ" />
+                        </div>
+                        <div class="field">
+                            <label for="email">Email</label>
+                            <input id="email" type="email" formControlName="email" />
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+                            {{ submitting() ? "Saving…" : "Create party" }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        }
+
+        <div class="card">
+            @if (parties().length === 0) {
+                <app-empty-state title="No parties yet" description="Add a customer or supplier to issue invoices." />
+            } @else {
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Document</th>
+                                <th>Email</th>
+                                <th>Type</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (party of parties(); track party.id) {
+                                <tr>
+                                    <td>{{ party.name }}</td>
+                                    <td class="mono">{{ party.document }}</td>
+                                    <td>{{ party.email }}</td>
+                                    <td>
+                                        <span class="badge" [class.badge-info]="party.type === 'CUSTOMER'" [class.badge-warning]="party.type === 'SUPPLIER'">
+                                            {{ party.type }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a routerLink="/invoices" [queryParams]="{ partyId: party.id }" class="btn btn-secondary btn-sm">
+                                            Issue invoice
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>

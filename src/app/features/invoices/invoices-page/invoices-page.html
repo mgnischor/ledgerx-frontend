@@ -1,0 +1,146 @@
+<div class="page">
+    <div class="page-header">
+        <div>
+            <h1>Invoices</h1>
+            <p>Accounts receivable and payable, issued in monthly installments.</p>
+        </div>
+        @if (companyContext.selectedCompany()) {
+            <button type="button" class="btn btn-primary" (click)="showForm.set(!showForm())">
+                {{ showForm() ? "Cancel" : "+ Issue invoice" }}
+            </button>
+        }
+    </div>
+
+    @if (!companyContext.selectedCompany()) {
+        <app-empty-state title="No active company selected" description="Select a company to issue invoices.">
+            <a routerLink="/companies" class="btn btn-primary">Go to companies</a>
+        </app-empty-state>
+    } @else {
+        @if (showForm()) {
+            <div class="card">
+                <h2 class="card-title">Issue invoice</h2>
+                @if (parties().length === 0) {
+                    <app-empty-state title="No parties yet" description="Add a customer or supplier first.">
+                        <a routerLink="/parties" class="btn btn-secondary">Go to parties</a>
+                    </app-empty-state>
+                } @else {
+                    <form [formGroup]="form" (ngSubmit)="submit()">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="partyId">Party</label>
+                                <select id="partyId" formControlName="partyId">
+                                    <option value="" disabled>Select…</option>
+                                    @for (party of parties(); track party.id) {
+                                        <option [value]="party.id">{{ party.name }}</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="direction">Direction</label>
+                                <select id="direction" formControlName="direction">
+                                    <option value="CUSTOMER">Receivable (customer)</option>
+                                    <option value="SUPPLIER">Payable (supplier)</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="firstDueDate">First due date</label>
+                                <input id="firstDueDate" type="date" formControlName="firstDueDate" />
+                            </div>
+                            <div class="field" style="grid-column: 1 / -1">
+                                <label for="installmentAmounts">Installment amounts (comma-separated, BRL)</label>
+                                <input id="installmentAmounts" formControlName="installmentAmounts" placeholder="500, 500, 500" />
+                                <span class="hint">Up to 60 installments, due monthly starting on the first due date.</span>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+                                {{ submitting() ? "Issuing…" : "Issue invoice" }}
+                            </button>
+                        </div>
+                    </form>
+                }
+            </div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Invoices issued this session</h2>
+            </div>
+            @if (issuedInvoices().length === 0) {
+                <app-empty-state title="No invoices issued yet" description="Invoices you issue in this browser session appear here." />
+            } @else {
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Invoice ID</th>
+                                <th>Party</th>
+                                <th>Direction</th>
+                                <th>Status</th>
+                                <th>Installments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (invoice of issuedInvoices(); track invoice.id) {
+                                <tr>
+                                    <td class="mono">{{ invoice.id }}</td>
+                                    <td>{{ partyName(invoice.partyId) }}</td>
+                                    <td>{{ invoice.direction }}</td>
+                                    <td><span class="badge badge-info">{{ invoice.status }}</span></td>
+                                    <td>{{ invoice.installmentCount }}</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Look up an invoice</h2>
+            </div>
+            <div class="row">
+                <input
+                    placeholder="Invoice ID"
+                    [value]="lookupId()"
+                    (input)="lookupId.set($any($event.target).value)"
+                    style="max-width: 340px"
+                />
+                <button type="button" class="btn btn-secondary" [disabled]="looking()" (click)="lookup()">
+                    {{ looking() ? "Looking up…" : "Look up" }}
+                </button>
+            </div>
+
+            @if (lookedUpInvoice(); as invoice) {
+                <hr class="divider" />
+                <div class="stack">
+                    <div class="row">
+                        <span class="badge badge-info">{{ invoice.status }}</span>
+                        <span class="text-muted">{{ invoice.installmentCount }} installment(s) · {{ invoice.direction }}</span>
+                    </div>
+
+                    <div class="grid grid-cols-2">
+                        <div class="field">
+                            <label>Register a payment</label>
+                            <p class="hint">
+                                The API does not expose installment IDs on the invoice, so paste the installment ID
+                                you received when the invoice was issued (see Swagger response) or from your records.
+                            </p>
+                            <input placeholder="Installment ID" [value]="installmentId()" (input)="installmentId.set($any($event.target).value)" />
+                            <input type="date" [value]="paidOn()" (change)="paidOn.set($any($event.target).value)" />
+                            <button type="button" class="btn btn-primary btn-sm" (click)="registerPayment()">
+                                Register payment
+                            </button>
+                        </div>
+                        <div class="field">
+                            <label>Cancel invoice</label>
+                            <p class="hint">A fully paid invoice cannot be canceled.</p>
+                            <button type="button" class="btn btn-danger btn-sm" (click)="cancel()">Cancel invoice</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

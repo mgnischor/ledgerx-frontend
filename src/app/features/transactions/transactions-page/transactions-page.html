@@ -1,0 +1,119 @@
+<div class="page">
+    <div class="page-header">
+        <div>
+            <h1>Transactions</h1>
+            <p>Record income and expenses, or transfer funds between accounts.</p>
+        </div>
+    </div>
+
+    @if (!companyContext.selectedCompany()) {
+        <app-empty-state title="No active company selected" description="Select a company to record transactions.">
+            <a routerLink="/companies" class="btn btn-primary">Go to companies</a>
+        </app-empty-state>
+    } @else if (accounts().length === 0) {
+        <app-empty-state
+            title="No financial accounts yet"
+            description="Create a financial account before recording transactions."
+        >
+            <a routerLink="/financial-accounts" class="btn btn-primary">Go to financial accounts</a>
+        </app-empty-state>
+    } @else {
+        <div class="tabs">
+            <button type="button" class="tab" [class.active]="tab() === 'transaction'" (click)="tab.set('transaction')">
+                Record transaction
+            </button>
+            <button type="button" class="tab" [class.active]="tab() === 'transfer'" (click)="tab.set('transfer')">
+                Transfer funds
+            </button>
+        </div>
+
+        @if (tab() === "transaction") {
+            <div class="card">
+                <form [formGroup]="form" (ngSubmit)="submitTransaction()">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="type">Type</label>
+                            <select id="type" formControlName="type">
+                                @for (type of types; track type) {
+                                    <option [value]="type">{{ type }}</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="financialAccountId">Account</label>
+                            <select id="financialAccountId" formControlName="financialAccountId">
+                                <option value="" disabled>Select…</option>
+                                @for (account of accounts(); track account.id) {
+                                    <option [value]="account.id">{{ account.name }}</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="categoryId">Category</label>
+                            <select id="categoryId" formControlName="categoryId">
+                                <option value="" disabled>Select…</option>
+                                @for (category of filteredCategories(form.controls.type.value); track category.id) {
+                                    <option [value]="category.id">{{ category.name }}</option>
+                                }
+                            </select>
+                            @if (filteredCategories(form.controls.type.value).length === 0) {
+                                <span class="hint">No {{ form.controls.type.value | lowercase }} categories yet.</span>
+                            }
+                        </div>
+                        <div class="field">
+                            <label for="amount">Amount (BRL)</label>
+                            <input id="amount" type="number" step="0.01" min="0.01" formControlName="amount" />
+                        </div>
+                        <div class="field">
+                            <label for="occurredOn">Date</label>
+                            <input id="occurredOn" type="date" formControlName="occurredOn" />
+                        </div>
+                        <div class="field">
+                            <label for="description">Description</label>
+                            <input id="description" formControlName="description" placeholder="Optional" />
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+                            {{ submitting() ? "Recording…" : "Record transaction" }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        } @else {
+            <div class="card">
+                <form [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="fromAccountId">From account</label>
+                            <select id="fromAccountId" formControlName="fromAccountId">
+                                <option value="" disabled>Select…</option>
+                                @for (account of accounts(); track account.id) {
+                                    <option [value]="account.id">{{ account.name }}</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="toAccountId">To account</label>
+                            <select id="toAccountId" formControlName="toAccountId">
+                                <option value="" disabled>Select…</option>
+                                @for (account of accounts(); track account.id) {
+                                    <option [value]="account.id">{{ account.name }}</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="transferAmount">Amount (BRL)</label>
+                            <input id="transferAmount" type="number" step="0.01" min="0.01" formControlName="amount" />
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" [disabled]="transferSubmitting()">
+                            {{ transferSubmitting() ? "Transferring…" : "Transfer funds" }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        }
+    }
+</div>

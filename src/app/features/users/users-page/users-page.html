@@ -1,0 +1,94 @@
+<div class="page">
+    <div class="page-header">
+        <div>
+            <h1>Users</h1>
+            <p>Register team members and manage roles. Requires DEVELOPER or ADMINISTRATOR.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 class="card-title">Register user</h2>
+        <form [formGroup]="form" (ngSubmit)="register()">
+            <div class="form-grid">
+                <div class="field">
+                    <label for="fullName">Full name</label>
+                    <input id="fullName" formControlName="fullName" />
+                </div>
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input id="email" type="email" formControlName="email" />
+                </div>
+                <div class="field">
+                    <label for="password">Temporary password</label>
+                    <input id="password" type="password" formControlName="password" />
+                    <span class="hint">8-128 chars, upper &amp; lower case, a digit, and a special character.</span>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+                    {{ submitting() ? "Registering…" : "Register user" }}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2 class="card-title">Grant a role</h2>
+        <p class="hint">New users start with no roles. Paste the user ID from the table below to grant one.</p>
+        <div class="row">
+            <input placeholder="User ID" [value]="grantUserId()" (input)="grantUserId.set($any($event.target).value)" style="max-width: 320px" />
+            <select [value]="grantRole()" (change)="grantRole.set($any($event.target).value)" style="max-width: 200px">
+                @for (role of roles; track role) {
+                    <option [value]="role">{{ role }}</option>
+                }
+            </select>
+            <button type="button" class="btn btn-secondary" (click)="grantRoleToUser()">Grant role</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Users registered this session</h2>
+        </div>
+        @if (registeredUsers().length === 0) {
+            <app-empty-state title="No users registered yet" />
+        } @else {
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Full name</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (user of registeredUsers(); track user.id) {
+                            <tr>
+                                <td class="mono">{{ user.id }}</td>
+                                <td>{{ user.fullName }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.roles.join(", ") || "None" }}</td>
+                                <td>
+                                    <span class="badge" [class.badge-success]="user.active" [class.badge-neutral]="!user.active">
+                                        {{ user.active ? "Active" : "Inactive" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (user.active) {
+                                        <button type="button" class="btn btn-danger btn-sm" (click)="deactivate(user)">
+                                            Deactivate
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
