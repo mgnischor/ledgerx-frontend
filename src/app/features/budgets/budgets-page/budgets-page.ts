@@ -9,11 +9,13 @@ import { BudgetApi } from "../../../core/services/api/budget.api";
 import { CategoryApi } from "../../../core/services/api/category.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
 import { ToastService } from "../../../core/services/toast.service";
+import { TranslationService } from "../../../core/services/translation.service";
 import { EmptyState } from "../../../shared/components/empty-state/empty-state";
+import { TranslatePipe } from "../../../shared/pipes/translate.pipe";
 
 @Component({
     selector: "app-budgets-page",
-    imports: [ReactiveFormsModule, RouterLink, EmptyState, DecimalPipe],
+    imports: [ReactiveFormsModule, RouterLink, EmptyState, DecimalPipe, TranslatePipe],
     templateUrl: "./budgets-page.html",
     styleUrl: "./budgets-page.scss",
 })
@@ -23,6 +25,7 @@ export class BudgetsPage {
     private readonly categoryApi = inject(CategoryApi);
     private readonly toast = inject(ToastService);
     protected readonly companyContext = inject(CompanyContextService);
+    protected readonly i18n = inject(TranslationService);
 
     private readonly reload$ = new Subject<void>();
 
@@ -74,7 +77,7 @@ export class BudgetsPage {
             .pipe(finalize(() => this.submitting.set(false)))
             .subscribe({
                 next: () => {
-                    this.toast.success("Budget created.");
+                    this.toast.success(this.i18n.t("budgets.toastCreated"));
                     this.form.reset({ period: this.currentMonth(), limit: 0 });
                     this.showForm.set(false);
                     this.reload$.next();
@@ -97,12 +100,12 @@ export class BudgetsPage {
 
     protected deactivate(budget: BudgetDto): void {
         const company = this.companyContext.selectedCompany();
-        if (!company || !confirm("Deactivate this budget?")) {
+        if (!company || !confirm(this.i18n.t("budgets.confirmDeactivate"))) {
             return;
         }
         this.budgetApi.deactivate(company.id, budget.id).subscribe({
             next: () => {
-                this.toast.success("Budget deactivated.");
+                this.toast.success(this.i18n.t("budgets.toastDeactivated"));
                 this.reload$.next();
             },
         });
