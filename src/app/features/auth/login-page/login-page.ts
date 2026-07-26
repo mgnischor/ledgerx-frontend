@@ -1,6 +1,7 @@
 import { Component, inject, signal } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
+import { finalize } from "rxjs";
 import { AuthService } from "../../../core/services/auth.service";
 import { ToastService } from "../../../core/services/toast.service";
 
@@ -23,21 +24,24 @@ export class LoginPage {
         password: ["", [Validators.required]],
     });
 
-    protected async submit(): Promise<void> {
+    protected submit(): void {
         if (this.form.invalid || this.submitting()) {
             this.form.markAllAsTouched();
             return;
         }
 
         this.submitting.set(true);
-        try {
-            await this.authService.login(this.form.getRawValue());
-            this.toast.success("Welcome back.");
-            await this.router.navigateByUrl("/");
-        } catch {
-            // error toast is raised globally by the HTTP error interceptor
-        } finally {
-            this.submitting.set(false);
-        }
+        this.authService
+            .login(this.form.getRawValue())
+            .pipe(finalize(() => this.submitting.set(false)))
+            .subscribe({
+                next: () => {
+                    this.toast.success("Welcome back.");
+                    this.router.navigateByUrl("/");
+                },
+                error: () => {
+                    // error toast is raised globally by the HTTP error interceptor
+                },
+            });
     }
 }
