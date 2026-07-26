@@ -5,11 +5,13 @@ import { catchError, throwError } from "rxjs";
 import { ApiError } from "../models/common.model";
 import { AuthService } from "../services/auth.service";
 import { ToastService } from "../services/toast.service";
+import { TranslationService } from "../services/translation.service";
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     const toast = inject(ToastService);
     const authService = inject(AuthService);
     const router = inject(Router);
+    const i18n = inject(TranslationService);
 
     return next(req).pipe(
         catchError((error: unknown) => {
@@ -17,9 +19,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
                 if (error.status === 401) {
                     authService.logout();
                     router.navigate(["/login"]);
-                    toast.error("Your session has expired. Please sign in again.");
+                    toast.error(i18n.t("errors.sessionExpired"));
                 } else {
-                    toast.error(extractMessage(error));
+                    toast.error(extractMessage(error, i18n));
                 }
             }
             return throwError(() => error);
@@ -27,9 +29,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     );
 };
 
-function extractMessage(error: HttpErrorResponse): string {
+function extractMessage(error: HttpErrorResponse, i18n: TranslationService): string {
     const body = error.error as ApiError | undefined;
 
+    // body.message/body.details come straight from the backend and are not localized.
     if (body?.message) {
         return body.details?.length ? `${body.message} ${body.details.join(" ")}` : body.message;
     }
@@ -39,7 +42,7 @@ function extractMessage(error: HttpErrorResponse): string {
     if (body?.error) {
         // Spring Boot's default error body for uncaught 400s (e.g. @Valid failures) carries no
         // per-field detail, only the short reason phrase (e.g. "Bad Request").
-        return `${body.error}. Check the highlighted fields and try again.`;
+        return i18n.t("errors.checkHighlightedFields", { error: body.error });
     }
-    return error.statusText || "An unexpected error occurred.";
+    return error.statusText || i18n.t("errors.unexpected");
 }
