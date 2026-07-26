@@ -1,8 +1,10 @@
 import { DecimalPipe } from "@angular/common";
-import { Component, computed, effect, inject, signal } from "@angular/core";
+import { Component, computed, inject, signal } from "@angular/core";
+import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { RouterLink } from "@angular/router";
-import { CashFlowSummary } from "../../../core/models/reporting.model";
+import { Subject, catchError, filter, finalize, map, merge, of, switchMap } from "rxjs";
 import { NotificationDto } from "../../../core/models/notification.model";
+import { CashFlowSummary } from "../../../core/models/reporting.model";
 import { NotificationApi } from "../../../core/services/api/notification.api";
 import { ReportApi } from "../../../core/services/api/report.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
@@ -19,48 +21,38 @@ export class DashboardPage {
     private readonly notificationApi = inject(NotificationApi);
     protected readonly companyContext = inject(CompanyContextService);
 
+    private readonly refresh$ = new Subject<void>();
+
     protected readonly loading = signal(false);
-    protected readonly summary = signal<CashFlowSummary | null>(null);
-    protected readonly notifications = signal<NotificationDto[]>([]);
     protected readonly from = signal(this.monthsAgo(1));
     protected readonly to = signal(this.today());
 
+    protected readonly summary = toSignal(
+        merge(toObservable(this.companyContext.selectedCompany), this.refresh$).pipe(
+            map(() => this.companyContext.selectedCompany()),
+            filter((company): company is NonNullable<typeof company> => !!company),
+            switchMap((company) => {
+                this.loading.set(true);
+                return this.reportApi.cashFlow(company.id, this.from(), this.to()).pipe(
+                    catchError(() => of(null)),
+                    finalize(() => this.loading.set(false)),
+                );
+            }),
+        ),
+        { initialValue: null as CashFlowSummary | null },
+    );
+
+    protected readonly notifications = toSignal(
+        this.notificationApi.list(false).pipe(map((notifications) => notifications.slice(0, 6))),
+        { initialValue: [] as NotificationDto[] },
+    );
+
     protected readonly netPositive = computed(() => (this.summary()?.netResult ?? 0) >= 0);
 
-    constructor() {
-        effect(() => {
-            const company = this.companyContext.selectedCompany();
-            if (company) {
-                this.loadReport(company.id);
-            } else {
-                this.summary.set(null);
-            }
-        });
-        this.loadNotifications();
-    }
-
-    protected loadReport(companyId: string): void {
-        this.loading.set(true);
-        this.reportApi.cashFlow(companyId, this.from(), this.to()).subscribe({
-            next: (summary) => {
-                this.summary.set(summary);
-                this.loading.set(false);
-            },
-            error: () => this.loading.set(false),
-        });
-    }
-
     protected applyRange(): void {
-        const company = this.companyContext.selectedCompany();
-        if (company) {
-            this.loadReport(company.id);
+        if (this.companyContext.selectedCompany()) {
+            this.refresh$.next();
         }
-    }
-
-    protected loadNotifications(): void {
-        this.notificationApi.list(false).subscribe({
-            next: (notifications) => this.notifications.set(notifications.slice(0, 6)),
-        });
     }
 
     private today(): string {
