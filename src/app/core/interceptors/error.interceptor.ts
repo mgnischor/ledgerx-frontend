@@ -29,11 +29,17 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
 function extractMessage(error: HttpErrorResponse): string {
     const body = error.error as ApiError | undefined;
+
     if (body?.message) {
-        return body.message;
+        return body.details?.length ? `${body.message} ${body.details.join(" ")}` : body.message;
     }
-    if (body?.errors) {
-        return Object.values(body.errors).join(" ");
+    if (body?.details?.length) {
+        return body.details.join(" ");
+    }
+    if (body?.error) {
+        // Spring Boot's default error body for uncaught 400s (e.g. @Valid failures) carries no
+        // per-field detail, only the short reason phrase (e.g. "Bad Request").
+        return `${body.error}. Check the highlighted fields and try again.`;
     }
     return error.statusText || "An unexpected error occurred.";
 }
