@@ -5,38 +5,40 @@ import { Subject, map, switchMap } from "rxjs";
 import { CompanyContextService } from "../../core/services/company-context.service";
 import { NotificationApi } from "../../core/services/api/notification.api";
 import { AuthService } from "../../core/services/auth.service";
+import { TranslationService } from "../../core/services/translation.service";
+import { LanguageSwitcher } from "../../shared/components/language-switcher/language-switcher";
+import { TranslatePipe } from "../../shared/pipes/translate.pipe";
 
 interface NavItem {
-    label: string;
+    labelKey: string;
     path: string;
-    icon: string;
-    requiresCompany?: boolean;
     roles?: string[];
 }
 
 const NAV_ITEMS: NavItem[] = [
-    { label: "Dashboard", path: "/dashboard", icon: "layout-dashboard" },
-    { label: "Companies", path: "/companies", icon: "building" },
-    { label: "Financial Accounts", path: "/financial-accounts", icon: "wallet", requiresCompany: true },
-    { label: "Categories", path: "/categories", icon: "tags", requiresCompany: true },
-    { label: "Transactions", path: "/transactions", icon: "arrow-left-right", requiresCompany: true },
-    { label: "Budgets", path: "/budgets", icon: "target", requiresCompany: true },
-    { label: "Recurring Rules", path: "/recurring-transactions", icon: "repeat", requiresCompany: true },
-    { label: "Parties", path: "/parties", icon: "users", requiresCompany: true },
-    { label: "Invoices", path: "/invoices", icon: "file-text", requiresCompany: true },
-    { label: "Notifications", path: "/notifications", icon: "bell" },
-    { label: "Users", path: "/users", icon: "shield", roles: ["DEVELOPER", "ADMINISTRATOR"] },
+    { labelKey: "nav.dashboard", path: "/dashboard" },
+    { labelKey: "nav.companies", path: "/companies" },
+    { labelKey: "nav.financialAccounts", path: "/financial-accounts" },
+    { labelKey: "nav.categories", path: "/categories" },
+    { labelKey: "nav.transactions", path: "/transactions" },
+    { labelKey: "nav.budgets", path: "/budgets" },
+    { labelKey: "nav.recurringRules", path: "/recurring-transactions" },
+    { labelKey: "nav.parties", path: "/parties" },
+    { labelKey: "nav.invoices", path: "/invoices" },
+    { labelKey: "nav.notifications", path: "/notifications" },
+    { labelKey: "nav.users", path: "/users", roles: ["DEVELOPER", "ADMINISTRATOR"] },
 ];
 
 @Component({
     selector: "app-shell",
-    imports: [RouterOutlet, RouterLink, RouterLinkActive],
+    imports: [RouterOutlet, RouterLink, RouterLinkActive, LanguageSwitcher, TranslatePipe],
     templateUrl: "./shell.html",
     styleUrl: "./shell.scss",
 })
 export class Shell {
     protected readonly authService = inject(AuthService);
     protected readonly companyContext = inject(CompanyContextService);
+    protected readonly i18n = inject(TranslationService);
     private readonly notificationApi = inject(NotificationApi);
     private readonly router = inject(Router);
 
