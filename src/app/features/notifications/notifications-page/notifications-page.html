@@ -1,29 +1,36 @@
 <div class="page">
     <div class="page-header">
         <div>
-            <h1>Notifications</h1>
-            <p>In-app feed of user, transaction, and invoice events.</p>
+            <h1>{{ "notifications.title" | translate }}</h1>
+            <p>{{ "notifications.subtitle" | translate }}</p>
         </div>
         <button type="button" class="btn btn-secondary" (click)="toggleUnreadOnly()">
-            {{ unreadOnly() ? "Show all" : "Show unread only" }}
+            {{ (unreadOnly() ? "notifications.showAll" : "notifications.showUnreadOnly") | translate }}
         </button>
     </div>
 
     <div class="card">
         @if (notifications().length === 0) {
-            <app-empty-state title="No notifications" description="You're all caught up." />
+            <app-empty-state
+                [title]="'notifications.emptyTitle' | translate"
+                [description]="'notifications.emptyDescription' | translate"
+            />
         } @else {
             <div class="stack">
                 @for (notification of notifications(); track notification.id) {
                     <div class="notification-item" [class.unread]="!notification.read">
                         <div>
-                            <span class="badge badge-neutral">{{ notification.type }}</span>
+                            <span class="badge badge-neutral">
+                                {{ "enums.notificationType." + notification.type | translate }}
+                            </span>
                             <p>{{ notification.message }}</p>
-                            <span class="text-muted hint">{{ notification.createdAt | date: "medium" }}</span>
+                            <span class="text-muted hint">
+                                {{ notification.createdAt | date: "medium" : undefined : i18n.locale() }}
+                            </span>
                         </div>
                         @if (!notification.read) {
                             <button type="button" class="btn btn-ghost btn-sm" (click)="markAsRead(notification)">
-                                Mark as read
+                                {{ "notifications.markAsRead" | translate }}
                             </button>
                         }
                     </div>
