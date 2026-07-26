@@ -8,11 +8,13 @@ import { InvoiceApi } from "../../../core/services/api/invoice.api";
 import { PartyApi } from "../../../core/services/api/party.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
 import { ToastService } from "../../../core/services/toast.service";
+import { TranslationService } from "../../../core/services/translation.service";
 import { EmptyState } from "../../../shared/components/empty-state/empty-state";
+import { TranslatePipe } from "../../../shared/pipes/translate.pipe";
 
 @Component({
     selector: "app-invoices-page",
-    imports: [ReactiveFormsModule, RouterLink, EmptyState],
+    imports: [ReactiveFormsModule, RouterLink, EmptyState, TranslatePipe],
     templateUrl: "./invoices-page.html",
     styleUrl: "./invoices-page.scss",
 })
@@ -23,6 +25,7 @@ export class InvoicesPage {
     private readonly toast = inject(ToastService);
     private readonly route = inject(ActivatedRoute);
     protected readonly companyContext = inject(CompanyContextService);
+    protected readonly i18n = inject(TranslationService);
 
     private readonly lookup$ = new Subject<string>();
 
@@ -89,7 +92,7 @@ export class InvoicesPage {
             .filter((value) => !Number.isNaN(value) && value > 0);
 
         if (amounts.length === 0) {
-            this.toast.error("Enter at least one valid installment amount.");
+            this.toast.error(this.i18n.t("invoices.toastInvalidInstallments"));
             return;
         }
 
@@ -101,7 +104,7 @@ export class InvoicesPage {
             .subscribe({
                 next: (invoice) => {
                     this.issuedInvoices.update((invoices) => [invoice, ...invoices]);
-                    this.toast.success(`Invoice issued with ${invoice.installmentCount} installment(s).`);
+                    this.toast.success(this.i18n.t("invoices.toastIssued", { count: invoice.installmentCount }));
                     this.form.reset({ direction: "CUSTOMER", firstDueDate: this.today(), installmentAmounts: "" });
                     this.showForm.set(false);
                 },
@@ -126,7 +129,7 @@ export class InvoicesPage {
         }
         this.invoiceApi.registerPayment(invoice.id, { installmentId, paidOn: this.paidOn() }).subscribe({
             next: () => {
-                this.toast.success("Payment registered.");
+                this.toast.success(this.i18n.t("invoices.toastPaymentRegistered"));
                 this.lookup$.next(invoice.id);
             },
         });
@@ -134,12 +137,12 @@ export class InvoicesPage {
 
     protected cancel(): void {
         const invoice = this.lookedUpInvoice();
-        if (!invoice || !confirm("Cancel this invoice?")) {
+        if (!invoice || !confirm(this.i18n.t("invoices.confirmCancel"))) {
             return;
         }
         this.invoiceApi.cancel(invoice.id).subscribe({
             next: () => {
-                this.toast.success("Invoice canceled.");
+                this.toast.success(this.i18n.t("invoices.toastCanceled"));
                 this.lookup$.next(invoice.id);
             },
         });
