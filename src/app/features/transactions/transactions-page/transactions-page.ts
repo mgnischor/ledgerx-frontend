@@ -1,4 +1,3 @@
-import { LowerCasePipe } from "@angular/common";
 import { Component, inject, signal } from "@angular/core";
 import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
@@ -10,13 +9,15 @@ import { FinancialAccountApi } from "../../../core/services/api/financial-accoun
 import { TransactionApi } from "../../../core/services/api/transaction.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
 import { ToastService } from "../../../core/services/toast.service";
+import { TranslationService } from "../../../core/services/translation.service";
 import { EmptyState } from "../../../shared/components/empty-state/empty-state";
+import { TranslatePipe } from "../../../shared/pipes/translate.pipe";
 
 type Tab = "transaction" | "transfer";
 
 @Component({
     selector: "app-transactions-page",
-    imports: [ReactiveFormsModule, RouterLink, EmptyState, LowerCasePipe],
+    imports: [ReactiveFormsModule, RouterLink, EmptyState, TranslatePipe],
     templateUrl: "./transactions-page.html",
     styleUrl: "./transactions-page.scss",
 })
@@ -27,6 +28,7 @@ export class TransactionsPage {
     private readonly transactionApi = inject(TransactionApi);
     private readonly toast = inject(ToastService);
     protected readonly companyContext = inject(CompanyContextService);
+    protected readonly i18n = inject(TranslationService);
 
     private readonly reloadAccounts$ = new Subject<void>();
 
@@ -71,6 +73,10 @@ export class TransactionsPage {
         return this.categories().filter((category) => category.type === type);
     }
 
+    protected typeLabelLower(type: TransactionType): string {
+        return this.i18n.t(`enums.transactionType.${type}`).toLowerCase();
+    }
+
     protected submitTransaction(): void {
         if (this.form.invalid || this.submitting()) {
             this.form.markAllAsTouched();
@@ -84,7 +90,7 @@ export class TransactionsPage {
             .pipe(finalize(() => this.submitting.set(false)))
             .subscribe({
                 next: () => {
-                    this.toast.success("Transaction recorded.");
+                    this.toast.success(this.i18n.t("transactions.toastRecorded"));
                     this.form.reset({ type: "EXPENSE", amount: 0, occurredOn: this.today() });
                     this.reloadAccounts$.next();
                 },
@@ -106,7 +112,7 @@ export class TransactionsPage {
             .pipe(finalize(() => this.transferSubmitting.set(false)))
             .subscribe({
                 next: () => {
-                    this.toast.success("Transfer completed.");
+                    this.toast.success(this.i18n.t("transactions.toastTransferred"));
                     this.transferForm.reset({ amount: 0 });
                     this.reloadAccounts$.next();
                 },
