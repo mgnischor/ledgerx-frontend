@@ -1,5 +1,4 @@
 import { Routes } from "@angular/router";
-<<<<<<< HEAD
 import { authGuard, guestGuard } from "./core/guards/auth.guard";
 import { roleGuard } from "./core/guards/role.guard";
 
@@ -80,7 +79,3 @@ export const routes: Routes = [
     },
     { path: "**", redirectTo: "" },
 ];
-=======
-
-export const routes: Routes = [];
->>>>>>> b6e24a135638ec3e2eaa2435f28761b87b3ba772
