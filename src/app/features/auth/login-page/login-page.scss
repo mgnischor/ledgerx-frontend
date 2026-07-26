@@ -10,6 +10,7 @@
 }
 
 .login-panel {
+    position: relative;
     width: 100%;
     max-width: 380px;
     background: var(--color-surface);
@@ -17,6 +18,12 @@
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     padding: 32px;
+}
+
+.login-language-switcher {
+    position: absolute;
+    top: 16px;
+    right: 16px;
 }
 
 .brand {
