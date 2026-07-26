@@ -4,11 +4,13 @@ import { finalize } from "rxjs";
 import { Role, UserDto } from "../../../core/models/identity.model";
 import { UserApi } from "../../../core/services/api/user.api";
 import { ToastService } from "../../../core/services/toast.service";
+import { TranslationService } from "../../../core/services/translation.service";
 import { EmptyState } from "../../../shared/components/empty-state/empty-state";
+import { TranslatePipe } from "../../../shared/pipes/translate.pipe";
 
 @Component({
     selector: "app-users-page",
-    imports: [ReactiveFormsModule, EmptyState],
+    imports: [ReactiveFormsModule, EmptyState, TranslatePipe],
     templateUrl: "./users-page.html",
     styleUrl: "./users-page.scss",
 })
@@ -16,6 +18,7 @@ export class UsersPage {
     private readonly fb = inject(FormBuilder);
     private readonly userApi = inject(UserApi);
     private readonly toast = inject(ToastService);
+    protected readonly i18n = inject(TranslationService);
 
     protected readonly roles: Role[] = ["DEVELOPER", "ADMINISTRATOR", "MANAGER", "COLLABORATOR"];
     protected readonly registeredUsers = signal<UserDto[]>([]);
@@ -43,7 +46,7 @@ export class UsersPage {
             .subscribe({
                 next: (user) => {
                     this.registeredUsers.update((users) => [user, ...users]);
-                    this.toast.success(`${user.fullName} registered. Grant a role to enable access.`);
+                    this.toast.success(this.i18n.t("users.toastRegistered", { name: user.fullName }));
                     this.form.reset();
                 },
                 error: () => {
@@ -60,19 +63,24 @@ export class UsersPage {
         this.userApi.grantRole(userId, { role: this.grantRole() }).subscribe({
             next: (user) => {
                 this.registeredUsers.update((users) => users.map((u) => (u.id === user.id ? user : u)));
-                this.toast.success(`${this.grantRole()} granted to ${user.fullName}.`);
+                this.toast.success(
+                    this.i18n.t("users.toastRoleGranted", {
+                        role: this.i18n.t(`enums.role.${this.grantRole()}`),
+                        name: user.fullName,
+                    }),
+                );
             },
         });
     }
 
     protected deactivate(user: UserDto): void {
-        if (!confirm(`Deactivate ${user.fullName}?`)) {
+        if (!confirm(this.i18n.t("users.confirmDeactivate", { name: user.fullName }))) {
             return;
         }
         this.userApi.deactivate(user.id).subscribe({
             next: (updated) => {
                 this.registeredUsers.update((users) => users.map((u) => (u.id === updated.id ? updated : u)));
-                this.toast.success(`${user.fullName} deactivated.`);
+                this.toast.success(this.i18n.t("users.toastDeactivated", { name: user.fullName }));
             },
         });
     }
