@@ -1,0 +1,107 @@
+<div class="page">
+    <div class="page-header">
+        <div>
+            <h1>Budgets</h1>
+            <p>Monthly spending limits per expense category.</p>
+        </div>
+        @if (companyContext.selectedCompany()) {
+            <button type="button" class="btn btn-primary" (click)="showForm.set(!showForm())">
+                {{ showForm() ? "Cancel" : "+ New budget" }}
+            </button>
+        }
+    </div>
+
+    @if (!companyContext.selectedCompany()) {
+        <app-empty-state title="No active company selected" description="Select a company to manage budgets.">
+            <a routerLink="/companies" class="btn btn-primary">Go to companies</a>
+        </app-empty-state>
+    } @else {
+        @if (showForm()) {
+            <div class="card">
+                <h2 class="card-title">New budget</h2>
+                @if (expenseCategories.length === 0) {
+                    <app-empty-state title="No expense categories" description="Create an expense category first.">
+                        <a routerLink="/categories" class="btn btn-secondary">Go to categories</a>
+                    </app-empty-state>
+                } @else {
+                    <form [formGroup]="form" (ngSubmit)="submit()">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="categoryId">Expense category</label>
+                                <select id="categoryId" formControlName="categoryId">
+                                    <option value="" disabled>Select…</option>
+                                    @for (category of expenseCategories; track category.id) {
+                                        <option [value]="category.id">{{ category.name }}</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="period">Period (month)</label>
+                                <input id="period" type="month" formControlName="period" />
+                            </div>
+                            <div class="field">
+                                <label for="limit">Limit (BRL)</label>
+                                <input id="limit" type="number" step="0.01" min="0.01" formControlName="limit" />
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+                                {{ submitting() ? "Saving…" : "Create budget" }}
+                            </button>
+                        </div>
+                    </form>
+                }
+            </div>
+        }
+
+        <div class="card">
+            @if (budgets().length === 0) {
+                <app-empty-state title="No budgets yet" description="Create a budget to track spending against a limit." />
+            } @else {
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Period</th>
+                                <th>Limit</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (budget of budgets(); track budget.id) {
+                                <tr>
+                                    <td>{{ categoryName(budget.categoryId) }}</td>
+                                    <td>{{ budget.period }}</td>
+                                    <td>{{ budget.limit | number: "1.2-2" }} {{ budget.currency }}</td>
+                                    <td>
+                                        @if (statuses()[budget.id]; as status) {
+                                            <span class="badge" [class.badge-danger]="status.overBudget" [class.badge-success]="!status.overBudget">
+                                                Spent {{ status.spent | number: "1.2-2" }} / Remaining
+                                                {{ status.remaining | number: "1.2-2" }}
+                                            </span>
+                                        } @else {
+                                            <button type="button" class="btn btn-ghost btn-sm" (click)="loadStatus(budget)">
+                                                Check status
+                                            </button>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (budget.active) {
+                                            <button type="button" class="btn btn-danger btn-sm" (click)="deactivate(budget)">
+                                                Deactivate
+                                            </button>
+                                        } @else {
+                                            <span class="badge badge-neutral">Inactive</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>
