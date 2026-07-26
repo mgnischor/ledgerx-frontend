@@ -1,5 +1,6 @@
 import { Component, inject, signal } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { finalize } from "rxjs";
 import { CompanySize } from "../../../core/models/company.model";
 import { CompanyApi } from "../../../core/services/api/company.api";
 import { CompanyContextService } from "../../../core/services/company-context.service";
@@ -48,16 +49,20 @@ export class CompaniesPage {
         }
 
         this.submitting.set(true);
-        this.companyApi.register(this.form.getRawValue()).subscribe({
-            next: (company) => {
-                this.companyContext.remember(company);
-                this.toast.success(`${company.tradeName} registered.`);
-                this.form.reset({ size: "MICRO", country: "Brazil" });
-                this.showForm.set(false);
-                this.submitting.set(false);
-            },
-            error: () => this.submitting.set(false),
-        });
+        this.companyApi
+            .register(this.form.getRawValue())
+            .pipe(finalize(() => this.submitting.set(false)))
+            .subscribe({
+                next: (company) => {
+                    this.companyContext.remember(company);
+                    this.toast.success(`${company.tradeName} registered.`);
+                    this.form.reset({ size: "MICRO", country: "Brazil" });
+                    this.showForm.set(false);
+                },
+                error: () => {
+                    // error toast is raised globally by the HTTP error interceptor
+                },
+            });
     }
 
     protected deactivate(companyId: string, tradeName: string): void {
