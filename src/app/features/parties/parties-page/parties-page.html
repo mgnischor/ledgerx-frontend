@@ -1,58 +1,65 @@
 <div class="page">
     <div class="page-header">
         <div>
-            <h1>Parties</h1>
-            <p>Customers and suppliers linked to the active company.</p>
+            <h1>{{ "parties.title" | translate }}</h1>
+            <p>{{ "parties.subtitle" | translate }}</p>
         </div>
         @if (companyContext.selectedCompany()) {
             <button type="button" class="btn btn-primary" (click)="showForm.set(!showForm())">
-                {{ showForm() ? "Cancel" : "+ New party" }}
+                {{ (showForm() ? "common.cancel" : "parties.newParty") | translate }}
             </button>
         }
     </div>
 
     @if (!companyContext.selectedCompany()) {
-        <app-empty-state title="No active company selected" description="Select a company to manage parties.">
-            <a routerLink="/companies" class="btn btn-primary">Go to companies</a>
+        <app-empty-state
+            [title]="'dashboard.emptyCompanyTitle' | translate"
+            [description]="'parties.emptyCompanyDescription' | translate"
+        >
+            <a routerLink="/companies" class="btn btn-primary">{{ "common.goToCompanies" | translate }}</a>
         </app-empty-state>
     } @else {
         @if (showForm()) {
             <div class="card">
-                <h2 class="card-title">New party</h2>
+                <h2 class="card-title">{{ "parties.newPartyTitle" | translate }}</h2>
                 <form [formGroup]="form" (ngSubmit)="submit()">
                     <div class="form-grid">
                         <div class="field">
-                            <label for="name">Name</label>
-                            <input id="name" formControlName="name" placeholder="Party legal or trade name" />
+                            <label for="name">{{ "common.name" | translate }}</label>
+                            <input id="name" formControlName="name" [attr.placeholder]="'parties.namePlaceholder' | translate" />
                         </div>
                         <div class="field">
-                            <label for="type">Type</label>
+                            <label for="type">{{ "common.type" | translate }}</label>
                             <select id="type" formControlName="type">
                                 @for (type of partyTypes; track type) {
-                                    <option [value]="type">{{ type }}</option>
+                                    <option [value]="type">{{ "enums.partyType." + type | translate }}</option>
                                 }
                             </select>
                         </div>
                         <div class="field">
-                            <label for="documentType">Document type</label>
+                            <label for="documentType">{{ "parties.documentType" | translate }}</label>
                             <select id="documentType" formControlName="documentType">
                                 @for (type of documentTypes; track type) {
-                                    <option [value]="type">{{ type }}</option>
+                                    <option [value]="type">{{ "enums.documentType." + type | translate }}</option>
                                 }
                             </select>
                         </div>
                         <div class="field">
-                            <label for="document">Document number</label>
-                            <input id="document" formControlName="document" placeholder="CPF or CNPJ" />
+                            <label for="document">{{ "parties.documentNumber" | translate }}</label>
+                            <input
+                                id="document"
+                                formControlName="document"
+                                [attr.placeholder]="'parties.documentPlaceholder' | translate"
+                            />
                         </div>
                         <div class="field">
-                            <label for="email">Email</label>
+                            <label for="email">{{ "common.email" | translate }}</label>
                             <input id="email" type="email" formControlName="email" />
                         </div>
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary" [disabled]="submitting()">
-                            {{ submitting() ? "Saving…" : "Create party" }}
+                            {{ (submitting() ? "parties.saving" : "parties.createParty") | translate }}
                         </button>
                     </div>
                 </form>
@@ -61,16 +68,19 @@
 
         <div class="card">
             @if (parties().length === 0) {
-                <app-empty-state title="No parties yet" description="Add a customer or supplier to issue invoices." />
+                <app-empty-state
+                    [title]="'parties.emptyTitle' | translate"
+                    [description]="'parties.emptyDescription' | translate"
+                />
             } @else {
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Document</th>
-                                <th>Email</th>
-                                <th>Type</th>
+                                <th>{{ "parties.colName" | translate }}</th>
+                                <th>{{ "parties.colDocument" | translate }}</th>
+                                <th>{{ "common.email" | translate }}</th>
+                                <th>{{ "common.type" | translate }}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -82,12 +92,12 @@
                                     <td>{{ party.email }}</td>
                                     <td>
                                         <span class="badge" [class.badge-info]="party.type === 'CUSTOMER'" [class.badge-warning]="party.type === 'SUPPLIER'">
-                                            {{ party.type }}
+                                            {{ "enums.partyType." + party.type | translate }}
                                         </span>
                                     </td>
                                     <td>
                                         <a routerLink="/invoices" [queryParams]="{ partyId: party.id }" class="btn btn-secondary btn-sm">
-                                            Issue invoice
+                                            {{ "parties.issueInvoice" | translate }}
                                         </a>
                                     </td>
                                 </tr>
