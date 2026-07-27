@@ -29,7 +29,8 @@
         "parties": "Clientes/Proveedores",
         "invoices": "Facturas",
         "notifications": "Notificaciones",
-        "users": "Usuarios"
+        "users": "Usuarios",
+        "developer": "Desarrollador"
     },
     "topbar": {
         "toggleMenu": "Alternar menú",
@@ -364,5 +365,22 @@
             "TRANSACTION_RECORDED": "Transacción registrada",
             "INVOICE_PAID": "Factura pagada"
         }
+    },
+    "developer": {
+        "title": "Desarrollador",
+        "subtitle": "Diagnósticos de runtime y compilación del backend de LedgerX.",
+        "loading": "Cargando…",
+        "loadError": "No se pudieron cargar los diagnósticos de runtime. Confirme que su cuenta aún tiene el permiso de depuración de DEVELOPER.",
+        "runtimeTitle": "Runtime",
+        "applicationName": "Nombre de la aplicación",
+        "javaVersion": "Versión de Java",
+        "uptime": "Tiempo de actividad",
+        "activeProfiles": "Perfiles activos",
+        "noActiveProfiles": "No hay perfiles activos.",
+        "serverTime": "Hora del servidor",
+        "requestTraceTitle": "Rastreo de la solicitud",
+        "requestTraceHint": "Encabezados X-Debug-* adjuntos a esta respuesta porque su cuenta tiene el permiso DEBUG.",
+        "requestId": "ID de la solicitud",
+        "requestDuration": "Duración"
     }
 }
