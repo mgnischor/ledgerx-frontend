@@ -7,6 +7,14 @@ import { AuthService } from "../services/auth.service";
 import { ToastService } from "../services/toast.service";
 import { TranslationService } from "../services/translation.service";
 
+/**
+ * Surfaces every failed HTTP request as a toast and re-throws it so callers can still react
+ * locally (e.g. to reset a "submitting" flag via `finalize`).
+ *
+ * A `401 Unauthorized` is treated specially: it logs the user out and redirects to `/login`,
+ * since it means the session has expired or been revoked. Every other error status is passed to
+ * {@link extractMessage} to build a human-readable toast message.
+ */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     const toast = inject(ToastService);
     const authService = inject(AuthService);
@@ -29,6 +37,21 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     );
 };
 
+/**
+ * Derives a human-readable message from a failed HTTP response.
+ *
+ * The backend returns two different shapes depending on whether the exception was caught by its
+ * `GlobalExceptionHandler`: a structured {@link ApiError} with `message`/`details` for handled
+ * exceptions (404/422/401/403), or Spring Boot's bare default error body (`timestamp`/`status`/
+ * `error`/`path`, no `message`) for uncaught `@Valid` bean-validation failures (400). This function
+ * degrades gracefully through both cases.
+ *
+ * @param error the failed HTTP response
+ * @param i18n  used to localize the client-side fallback messages; text sourced from the backend
+ *   itself (`message`/`details`) is passed through unlocalized, since the API only replies in
+ *   English
+ * @returns the best available human-readable error message
+ */
 function extractMessage(error: HttpErrorResponse, i18n: TranslationService): string {
     const body = error.error as ApiError | undefined;
 
