@@ -1,5 +1,6 @@
 import { Routes } from "@angular/router";
 import { authGuard, guestGuard } from "./core/guards/auth.guard";
+import { permissionGuard } from "./core/guards/permission.guard";
 import { roleGuard } from "./core/guards/role.guard";
 
 export const routes: Routes = [
@@ -74,6 +75,12 @@ export const routes: Routes = [
                 path: "users",
                 canActivate: [roleGuard("DEVELOPER", "ADMINISTRATOR")],
                 loadComponent: () => import("./features/users/users-page/users-page").then((m) => m.UsersPage),
+            },
+            {
+                path: "developer",
+                canActivate: [permissionGuard("DEBUG")],
+                loadComponent: () =>
+                    import("./features/developer/developer-page/developer-page").then((m) => m.DeveloperPage),
             },
         ],
     },
