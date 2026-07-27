@@ -29,7 +29,8 @@
         "parties": "Parties",
         "invoices": "Invoices",
         "notifications": "Notifications",
-        "users": "Users"
+        "users": "Users",
+        "developer": "Developer"
     },
     "topbar": {
         "toggleMenu": "Toggle menu",
@@ -364,5 +365,22 @@
             "TRANSACTION_RECORDED": "Transaction recorded",
             "INVOICE_PAID": "Invoice paid"
         }
+    },
+    "developer": {
+        "title": "Developer",
+        "subtitle": "Runtime and build diagnostics for the LedgerX backend.",
+        "loading": "Loading…",
+        "loadError": "Could not load runtime diagnostics. Confirm your account still holds the DEVELOPER debug permission.",
+        "runtimeTitle": "Runtime",
+        "applicationName": "Application name",
+        "javaVersion": "Java version",
+        "uptime": "Uptime",
+        "activeProfiles": "Active profiles",
+        "noActiveProfiles": "No active profiles.",
+        "serverTime": "Server time",
+        "requestTraceTitle": "Request trace",
+        "requestTraceHint": "X-Debug-* headers attached to this response because your account holds the DEBUG permission.",
+        "requestId": "Request ID",
+        "requestDuration": "Duration"
     }
 }
