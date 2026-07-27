@@ -368,19 +368,70 @@
     },
     "developer": {
         "title": "Desarrollador",
-        "subtitle": "Diagnósticos de runtime y compilación del backend de LedgerX.",
+        "subtitle": "Diagnósticos en vivo del entorno de ejecución del contenedor del backend de LedgerX.",
         "loading": "Cargando…",
         "loadError": "No se pudieron cargar los diagnósticos de runtime. Confirme que su cuenta aún tiene el permiso de depuración de DEVELOPER.",
-        "runtimeTitle": "Runtime",
-        "applicationName": "Nombre de la aplicación",
-        "javaVersion": "Versión de Java",
-        "uptime": "Tiempo de actividad",
-        "activeProfiles": "Perfiles activos",
-        "noActiveProfiles": "No hay perfiles activos.",
-        "serverTime": "Hora del servidor",
-        "requestTraceTitle": "Rastreo de la solicitud",
-        "requestTraceHint": "Encabezados X-Debug-* adjuntos a esta respuesta porque su cuenta tiene el permiso DEBUG.",
-        "requestId": "ID de la solicitud",
-        "requestDuration": "Duración"
+        "notAvailable": "n/d",
+        "sections": {
+            "application": "Aplicación",
+            "javaRuntime": "Runtime de Java",
+            "operatingSystem": "Sistema Operativo",
+            "cpu": "CPU",
+            "memory": "Memoria",
+            "storage": "Almacenamiento",
+            "services": "Servicios Dependientes"
+        },
+        "application": {
+            "name": "Nombre de la aplicación",
+            "activeProfiles": "Perfiles activos",
+            "noActiveProfiles": "No hay perfiles activos.",
+            "serverTime": "Hora del servidor"
+        },
+        "javaRuntime": {
+            "vendor": "Proveedor",
+            "version": "Versión de Java",
+            "vm": "Máquina virtual",
+            "javaHome": "Java home",
+            "pid": "ID de proceso",
+            "uptime": "Tiempo de actividad",
+            "startTime": "Iniciado a las"
+        },
+        "os": {
+            "name": "Nombre",
+            "version": "Versión",
+            "architecture": "Arquitectura",
+            "hostName": "Nombre del host"
+        },
+        "cpu": {
+            "availableProcessors": "Procesadores disponibles",
+            "systemLoad": "Carga del sistema",
+            "processLoad": "Carga del proceso",
+            "systemLoadAverage": "Carga media de 1 minuto"
+        },
+        "memory": {
+            "jvm": "Heap de la JVM",
+            "system": "Sistema",
+            "used": "Usado",
+            "free": "Libre",
+            "max": "Máximo",
+            "total": "Total"
+        },
+        "storage": {
+            "path": "Ruta",
+            "used": "Usado",
+            "usable": "Disponible",
+            "total": "Total"
+        },
+        "services": {
+            "rabbitMq": "RabbitMQ",
+            "postgreSql": "PostgreSQL",
+            "grafana": "Grafana"
+        },
+        "requestTrace": {
+            "title": "Rastreo de la solicitud",
+            "hint": "Encabezados X-Debug-* adjuntos a esta respuesta porque su cuenta tiene el permiso DEBUG.",
+            "requestId": "ID de la solicitud",
+            "duration": "Duración"
+        }
     }
 }
