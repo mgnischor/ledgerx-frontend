@@ -3,6 +3,15 @@ import { authGuard, guestGuard } from "./core/guards/auth.guard";
 import { permissionGuard } from "./core/guards/permission.guard";
 import { roleGuard } from "./core/guards/role.guard";
 
+/**
+ * Top-level route table.
+ *
+ * `/login` is the only route reachable while unauthenticated ({@link guestGuard} bounces an
+ * already-authenticated user back to `/`). Every other route is a lazy-loaded child of the
+ * {@link Shell} layout, gated as a whole by {@link authGuard}; individual children additionally
+ * apply {@link roleGuard} or {@link permissionGuard} where the backend restricts the underlying
+ * endpoints to specific roles/permissions.
+ */
 export const routes: Routes = [
     {
         path: "login",
@@ -72,11 +81,15 @@ export const routes: Routes = [
                     ),
             },
             {
+                // Mirrors the backend's `GrantRoleUseCase`/`DeactivateUserUseCase` restriction to
+                // DEVELOPER or ADMINISTRATOR (see BR-124).
                 path: "users",
                 canActivate: [roleGuard("DEVELOPER", "ADMINISTRATOR")],
                 loadComponent: () => import("./features/users/users-page/users-page").then((m) => m.UsersPage),
             },
             {
+                // Mirrors the backend's PERMISSION_DEBUG requirement on `DeveloperController`,
+                // held exclusively by the DEVELOPER role (see BR-125).
                 path: "developer",
                 canActivate: [permissionGuard("DEBUG")],
                 loadComponent: () =>
