@@ -368,19 +368,70 @@
     },
     "developer": {
         "title": "Developer",
-        "subtitle": "Runtime and build diagnostics for the LedgerX backend.",
+        "subtitle": "Live runtime environment diagnostics for the LedgerX backend container.",
         "loading": "Loading…",
         "loadError": "Could not load runtime diagnostics. Confirm your account still holds the DEVELOPER debug permission.",
-        "runtimeTitle": "Runtime",
-        "applicationName": "Application name",
-        "javaVersion": "Java version",
-        "uptime": "Uptime",
-        "activeProfiles": "Active profiles",
-        "noActiveProfiles": "No active profiles.",
-        "serverTime": "Server time",
-        "requestTraceTitle": "Request trace",
-        "requestTraceHint": "X-Debug-* headers attached to this response because your account holds the DEBUG permission.",
-        "requestId": "Request ID",
-        "requestDuration": "Duration"
+        "notAvailable": "n/a",
+        "sections": {
+            "application": "Application",
+            "javaRuntime": "Java Runtime",
+            "operatingSystem": "Operating System",
+            "cpu": "CPU",
+            "memory": "Memory",
+            "storage": "Storage",
+            "services": "Dependent Services"
+        },
+        "application": {
+            "name": "Application name",
+            "activeProfiles": "Active profiles",
+            "noActiveProfiles": "No active profiles.",
+            "serverTime": "Server time"
+        },
+        "javaRuntime": {
+            "vendor": "Vendor",
+            "version": "Java version",
+            "vm": "Virtual machine",
+            "javaHome": "Java home",
+            "pid": "Process ID",
+            "uptime": "Uptime",
+            "startTime": "Started at"
+        },
+        "os": {
+            "name": "Name",
+            "version": "Version",
+            "architecture": "Architecture",
+            "hostName": "Host name"
+        },
+        "cpu": {
+            "availableProcessors": "Available processors",
+            "systemLoad": "System load",
+            "processLoad": "Process load",
+            "systemLoadAverage": "1-minute load average"
+        },
+        "memory": {
+            "jvm": "JVM heap",
+            "system": "System",
+            "used": "Used",
+            "free": "Free",
+            "max": "Max",
+            "total": "Total"
+        },
+        "storage": {
+            "path": "Path",
+            "used": "Used",
+            "usable": "Usable",
+            "total": "Total"
+        },
+        "services": {
+            "rabbitMq": "RabbitMQ",
+            "postgreSql": "PostgreSQL",
+            "grafana": "Grafana"
+        },
+        "requestTrace": {
+            "title": "Request trace",
+            "hint": "X-Debug-* headers attached to this response because your account holds the DEBUG permission.",
+            "requestId": "Request ID",
+            "duration": "Duration"
+        }
     }
 }
