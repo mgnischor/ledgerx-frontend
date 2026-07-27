@@ -368,19 +368,70 @@
     },
     "developer": {
         "title": "Desenvolvedor",
-        "subtitle": "Diagnósticos de runtime e build do backend do LedgerX.",
+        "subtitle": "Diagnósticos ao vivo do ambiente de execução do container do backend do LedgerX.",
         "loading": "Carregando…",
         "loadError": "Não foi possível carregar os diagnósticos de runtime. Confirme se sua conta ainda tem a permissão de debug do DEVELOPER.",
-        "runtimeTitle": "Runtime",
-        "applicationName": "Nome da aplicação",
-        "javaVersion": "Versão do Java",
-        "uptime": "Tempo ativo",
-        "activeProfiles": "Perfis ativos",
-        "noActiveProfiles": "Nenhum perfil ativo.",
-        "serverTime": "Hora do servidor",
-        "requestTraceTitle": "Rastreamento da requisição",
-        "requestTraceHint": "Cabeçalhos X-Debug-* anexados a esta resposta porque sua conta tem a permissão DEBUG.",
-        "requestId": "ID da requisição",
-        "requestDuration": "Duração"
+        "notAvailable": "n/d",
+        "sections": {
+            "application": "Aplicação",
+            "javaRuntime": "Runtime Java",
+            "operatingSystem": "Sistema Operacional",
+            "cpu": "CPU",
+            "memory": "Memória",
+            "storage": "Armazenamento",
+            "services": "Serviços Dependentes"
+        },
+        "application": {
+            "name": "Nome da aplicação",
+            "activeProfiles": "Perfis ativos",
+            "noActiveProfiles": "Nenhum perfil ativo.",
+            "serverTime": "Hora do servidor"
+        },
+        "javaRuntime": {
+            "vendor": "Fornecedor",
+            "version": "Versão do Java",
+            "vm": "Máquina virtual",
+            "javaHome": "Java home",
+            "pid": "ID do processo",
+            "uptime": "Tempo ativo",
+            "startTime": "Iniciado em"
+        },
+        "os": {
+            "name": "Nome",
+            "version": "Versão",
+            "architecture": "Arquitetura",
+            "hostName": "Nome do host"
+        },
+        "cpu": {
+            "availableProcessors": "Processadores disponíveis",
+            "systemLoad": "Carga do sistema",
+            "processLoad": "Carga do processo",
+            "systemLoadAverage": "Carga média de 1 minuto"
+        },
+        "memory": {
+            "jvm": "Heap da JVM",
+            "system": "Sistema",
+            "used": "Usado",
+            "free": "Livre",
+            "max": "Máximo",
+            "total": "Total"
+        },
+        "storage": {
+            "path": "Caminho",
+            "used": "Usado",
+            "usable": "Disponível",
+            "total": "Total"
+        },
+        "services": {
+            "rabbitMq": "RabbitMQ",
+            "postgreSql": "PostgreSQL",
+            "grafana": "Grafana"
+        },
+        "requestTrace": {
+            "title": "Rastreamento da requisição",
+            "hint": "Cabeçalhos X-Debug-* anexados a esta resposta porque sua conta tem a permissão DEBUG.",
+            "requestId": "ID da requisição",
+            "duration": "Duração"
+        }
     }
 }
