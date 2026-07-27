@@ -1,0 +1,222 @@
+<div class="page">
+    <div class="page-header">
+        <div>
+            <h1>{{ "developer.title" | translate }}</h1>
+            <p>{{ "developer.subtitle" | translate }}</p>
+        </div>
+        <button type="button" class="btn btn-secondary" [disabled]="loading()" (click)="refresh()">
+            {{ (loading() ? "developer.loading" : "dashboard.refresh") | translate }}
+        </button>
+    </div>
+
+    @if (errored()) {
+        <div class="card">
+            <p class="text-danger">{{ "developer.loadError" | translate }}</p>
+        </div>
+    } @else if (info(); as info) {
+        <div class="grid grid-cols-2">
+            <div class="card">
+                <h2 class="card-title">{{ "developer.sections.application" | translate }}</h2>
+                <div class="stack">
+                    <div class="field">
+                        <label>{{ "developer.application.name" | translate }}</label>
+                        <span class="mono">{{ info.application.name }}</span>
+                    </div>
+                    <div class="field">
+                        <label>{{ "developer.application.activeProfiles" | translate }}</label>
+                        @if (info.application.activeProfiles.length === 0) {
+                            <span class="text-muted">{{ "developer.application.noActiveProfiles" | translate }}</span>
+                        } @else {
+                            <div class="row">
+                                @for (profile of info.application.activeProfiles; track profile) {
+                                    <span class="badge badge-info">{{ profile }}</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="field">
+                        <label>{{ "developer.application.serverTime" | translate }}</label>
+                        <span class="mono">{{ info.application.serverTime | date: "medium" : undefined : i18n.locale() }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">{{ "developer.sections.javaRuntime" | translate }}</h2>
+                <div class="stack">
+                    <div class="field">
+                        <label>{{ "developer.javaRuntime.vendor" | translate }}</label>
+                        <span class="mono">{{ info.javaRuntime.vendor }}</span>
+                    </div>
+                    <div class="field">
+                        <label>{{ "developer.javaRuntime.version" | translate }}</label>
+                        <span class="mono">{{ info.javaRuntime.version }}</span>
+                    </div>
+                    <div class="field">
+                        <label>{{ "developer.javaRuntime.vm" | translate }}</label>
+                        <span class="mono">{{ info.javaRuntime.vmName }} ({{ info.javaRuntime.vmVersion }})</span>
+                    </div>
+                    <div class="field">
+                        <label>{{ "developer.javaRuntime.javaHome" | translate }}</label>
+                        <span class="mono">{{ info.javaRuntime.javaHome }}</span>
+                    </div>
+                    <div class="row">
+                        <div class="field">
+                            <label>{{ "developer.javaRuntime.pid" | translate }}</label>
+                            <span class="mono">{{ info.javaRuntime.pid }}</span>
+                        </div>
+                        <div class="field">
+                            <label>{{ "developer.javaRuntime.uptime" | translate }}</label>
+                            <span class="mono">{{ formatUptime(info.javaRuntime.uptimeMillis) }}</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>{{ "developer.javaRuntime.startTime" | translate }}</label>
+                        <span class="mono">{{ info.javaRuntime.startTime | date: "medium" : undefined : i18n.locale() }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">{{ "developer.sections.operatingSystem" | translate }}</h2>
+                <div class="stack">
+                    <div class="field">
+                        <label>{{ "developer.os.name" | translate }}</label>
+                        <span class="mono">{{ info.operatingSystem.name }}</span>
+                    </div>
+                    <div class="field">
+                        <label>{{ "developer.os.version" | translate }}</label>
+                        <span class="mono">{{ info.operatingSystem.version }}</span>
+                    </div>
+                    <div class="row">
+                        <div class="field">
+                            <label>{{ "developer.os.architecture" | translate }}</label>
+                            <span class="mono">{{ info.operatingSystem.architecture }}</span>
+                        </div>
+                        <div class="field">
+                            <label>{{ "developer.os.hostName" | translate }}</label>
+                            <span class="mono">{{ info.operatingSystem.hostName }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">{{ "developer.sections.cpu" | translate }}</h2>
+                <div class="grid grid-cols-3">
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.cpu.availableProcessors" | translate }}</div>
+                        <div class="stat-value mono">{{ info.cpu.availableProcessors }}</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.cpu.systemLoad" | translate }}</div>
+                        <div class="stat-value mono">{{ formatPercentage(info.cpu.systemCpuLoadPercentage) }}</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.cpu.processLoad" | translate }}</div>
+                        <div class="stat-value mono">{{ formatPercentage(info.cpu.processCpuLoadPercentage) }}</div>
+                    </div>
+                </div>
+                <div class="field" style="margin-top: 14px">
+                    <label>{{ "developer.cpu.systemLoadAverage" | translate }}</label>
+                    <span class="mono">{{ formatLoadAverage(info.cpu.systemLoadAverage) }}</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">{{ "developer.sections.memory" | translate }}</h2>
+                <p class="card-title" style="margin-top: 0">{{ "developer.memory.jvm" | translate }}</p>
+                <div class="grid grid-cols-3">
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.memory.used" | translate }}</div>
+                        <div class="stat-value mono">{{ formatBytes(info.memory.jvmUsedBytes) }}</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.memory.free" | translate }}</div>
+                        <div class="stat-value mono">{{ formatBytes(info.memory.jvmFreeBytes) }}</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.memory.max" | translate }}</div>
+                        <div class="stat-value mono">{{ formatBytes(info.memory.jvmMaxBytes) }}</div>
+                    </div>
+                </div>
+                <p class="card-title">{{ "developer.memory.system" | translate }}</p>
+                <div class="grid grid-cols-3">
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.memory.used" | translate }}</div>
+                        <div class="stat-value mono">{{ formatBytes(info.memory.systemUsedBytes) }}</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.memory.free" | translate }}</div>
+                        <div class="stat-value mono">{{ formatBytes(info.memory.systemFreeBytes) }}</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.memory.total" | translate }}</div>
+                        <div class="stat-value mono">{{ formatBytes(info.memory.systemTotalBytes) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">{{ "developer.sections.storage" | translate }}</h2>
+                <div class="field">
+                    <label>{{ "developer.storage.path" | translate }}</label>
+                    <span class="mono">{{ info.storage.path }}</span>
+                </div>
+                <div class="grid grid-cols-3" style="margin-top: 14px">
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.storage.used" | translate }}</div>
+                        <div class="stat-value mono">{{ formatBytes(info.storage.usedBytes) }}</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.storage.usable" | translate }}</div>
+                        <div class="stat-value mono">{{ formatBytes(info.storage.usableBytes) }}</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-label">{{ "developer.storage.total" | translate }}</div>
+                        <div class="stat-value mono">{{ formatBytes(info.storage.totalBytes) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">{{ "developer.sections.services" | translate }}</h2>
+                <div class="stack">
+                    <div class="field">
+                        <label>{{ "developer.services.rabbitMq" | translate }}</label>
+                        <span class="mono" [class.text-danger]="isUnavailable(info.services.rabbitMq)">
+                            {{ info.services.rabbitMq }}
+                        </span>
+                    </div>
+                    <div class="field">
+                        <label>{{ "developer.services.postgreSql" | translate }}</label>
+                        <span class="mono" [class.text-danger]="isUnavailable(info.services.postgreSql)">
+                            {{ info.services.postgreSql }}
+                        </span>
+                    </div>
+                    <div class="field">
+                        <label>{{ "developer.services.grafana" | translate }}</label>
+                        <span class="mono" [class.text-danger]="isUnavailable(info.services.grafana)">
+                            {{ info.services.grafana }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            @if (headers(); as headers) {
+                <div class="card">
+                    <h2 class="card-title">{{ "developer.requestTrace.title" | translate }}</h2>
+                    <p class="hint">{{ "developer.requestTrace.hint" | translate }}</p>
+                    <div class="field">
+                        <label>{{ "developer.requestTrace.requestId" | translate }}</label>
+                        <span class="mono">{{ headers.requestId ?? "—" }}</span>
+                    </div>
+                    <div class="field" style="margin-top: 14px">
+                        <label>{{ "developer.requestTrace.duration" | translate }}</label>
+                        <span class="mono">{{ headers.durationMs ? headers.durationMs + " ms" : "—" }}</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
