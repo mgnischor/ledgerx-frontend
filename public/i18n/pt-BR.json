@@ -29,7 +29,8 @@
         "parties": "Clientes/Fornecedores",
         "invoices": "Faturas",
         "notifications": "Notificações",
-        "users": "Usuários"
+        "users": "Usuários",
+        "developer": "Desenvolvedor"
     },
     "topbar": {
         "toggleMenu": "Alternar menu",
@@ -364,5 +365,22 @@
             "TRANSACTION_RECORDED": "Transação registrada",
             "INVOICE_PAID": "Fatura paga"
         }
+    },
+    "developer": {
+        "title": "Desenvolvedor",
+        "subtitle": "Diagnósticos de runtime e build do backend do LedgerX.",
+        "loading": "Carregando…",
+        "loadError": "Não foi possível carregar os diagnósticos de runtime. Confirme se sua conta ainda tem a permissão de debug do DEVELOPER.",
+        "runtimeTitle": "Runtime",
+        "applicationName": "Nome da aplicação",
+        "javaVersion": "Versão do Java",
+        "uptime": "Tempo ativo",
+        "activeProfiles": "Perfis ativos",
+        "noActiveProfiles": "Nenhum perfil ativo.",
+        "serverTime": "Hora do servidor",
+        "requestTraceTitle": "Rastreamento da requisição",
+        "requestTraceHint": "Cabeçalhos X-Debug-* anexados a esta resposta porque sua conta tem a permissão DEBUG.",
+        "requestId": "ID da requisição",
+        "requestDuration": "Duração"
     }
 }
