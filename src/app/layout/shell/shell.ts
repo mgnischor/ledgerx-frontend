@@ -2,6 +2,7 @@ import { Component, inject, signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import { Subject, map, switchMap } from "rxjs";
+import { Permission, Role } from "../../core/models/identity.model";
 import { CompanyContextService } from "../../core/services/company-context.service";
 import { NotificationApi } from "../../core/services/api/notification.api";
 import { AuthService } from "../../core/services/auth.service";
@@ -12,7 +13,8 @@ import { TranslatePipe } from "../../shared/pipes/translate.pipe";
 interface NavItem {
     labelKey: string;
     path: string;
-    roles?: string[];
+    roles?: Role[];
+    permissions?: Permission[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -27,6 +29,7 @@ const NAV_ITEMS: NavItem[] = [
     { labelKey: "nav.invoices", path: "/invoices" },
     { labelKey: "nav.notifications", path: "/notifications" },
     { labelKey: "nav.users", path: "/users", roles: ["DEVELOPER", "ADMINISTRATOR"] },
+    { labelKey: "nav.developer", path: "/developer", permissions: ["DEBUG"] },
 ];
 
 @Component({
@@ -47,7 +50,9 @@ export class Shell {
     protected readonly sidebarOpen = signal(false);
 
     protected readonly navItems = NAV_ITEMS.filter(
-        (item) => !item.roles || this.authService.hasRole(...(item.roles as never[])),
+        (item) =>
+            (!item.roles || this.authService.hasRole(...item.roles)) &&
+            (!item.permissions || this.authService.hasPermission(...item.permissions)),
     );
 
     protected readonly unreadCount = toSignal(
