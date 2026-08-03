@@ -6,7 +6,7 @@ Cash accounts, income and expense tracking, accounts receivable and payable, bud
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.8.
 
-> **Status:** early-stage. The foundation (auth, layout, routing, API integration) and a working screen per backend bounded context are in place; there is no automated test coverage yet beyond the CLI-generated `app.spec.ts`, and a few backend API gaps (noted below) shape parts of the UI.
+> **Status:** early-stage. The foundation (auth, layout, routing, API integration) and a working screen per backend bounded context are in place; automated test coverage so far is limited to the `core/services/api/*` HTTP services and the CLI-generated `app.spec.ts` (no component or guard tests yet), and a few backend API gaps (noted below) shape parts of the UI.
 
 ![LedgerX Banner](./public/banner.png)
 
@@ -38,7 +38,8 @@ The app is a standalone-components, signals-based Angular SPA with routes lazy-l
 │  features/                                                      │  ← user-facing pages
 │  auth, dashboard, companies, financial-accounts, categories,    │
 │  transactions, budgets, recurring-transactions, parties,        │
-│  invoices, notifications, users — one lazy route per feature    │
+│  invoices, notifications, users, developer — one lazy route     │
+│  per feature                                                    │
 ├─────────────────────────────────────────────────────────────────┤
 │  layout/shell                                                   │  ← app shell
 │  Sidebar navigation, topbar, company switcher                   │
@@ -78,6 +79,7 @@ The app is a standalone-components, signals-based Angular SPA with routes lazy-l
 | Invoices               | `features/invoices`               | `billing` — issue, look up, register payments, cancel invoices                          |
 | Notifications          | `features/notifications`          | `notification` — list, filter unread, mark as read                                      |
 | Users                  | `features/users`                  | `identity` — register users, grant roles, deactivate (DEVELOPER/ADMINISTRATOR only)     |
+| Developer              | `features/developer`              | runtime diagnostics — app/OS/CPU/memory/storage/dependency info (DEBUG permission, DEVELOPER role only) |
 
 ## 🛠️ Technology Stack
 
@@ -139,6 +141,12 @@ Endpoints consumed by the UI:
 | GET        | `/api/v1/companies/{companyId}/reports/cash-flow` | Dashboard cash-flow summary      |
 | GET        | `/api/v1/notifications?unreadOnly=true`           | Notification badge and feed      |
 | PATCH      | `/api/v1/notifications/{notificationId}/read`     | Mark a notification as read      |
+
+### Developer Diagnostics
+
+| Method | Path              | Used for                                                                 |
+| ------ | ----------------- | ------------------------------------------------------------------------- |
+| GET    | `/api/v1/developer` | Runtime diagnostics snapshot (app info, OS, CPU, memory, storage, dependency versions, JVM info); response also carries `X-Debug-Request-Id`/`X-Debug-Duration-Ms` trace headers |
 
 Every backend endpoint is documented with springdoc-openapi at `https://<backend-host>/swagger-ui/index.html` (JSON at `/v3/api-docs`; e.g. `https://localhost:25360/swagger-ui/index.html` for the backend's own `compose.yaml`), permitted without authentication in local development — useful when wiring a new screen to an endpoint.
 
@@ -237,7 +245,7 @@ Prefer generating inside the owning feature (e.g. `ng generate component feature
 ng test
 ```
 
-Runs through the [Vitest](https://vitest.dev/) test runner. At the moment only the CLI-generated `app.spec.ts` exists — there is no `HttpTestingController` coverage for the API services yet. This is a good area to contribute to.
+Runs through the [Vitest](https://vitest.dev/) test runner. Every `core/services/api/*` service has a matching `*.spec.ts` alongside it, using `HttpTestingController` (via `provideHttpClientTesting()`) to assert on request method, URL, and body without hitting a real backend. Component- and guard-level coverage is still thin — the CLI-generated `app.spec.ts` and the API service specs are what exist today. This is a good area to contribute to.
 
 ### End-to-end tests
 
@@ -308,7 +316,8 @@ ledgerx-frontend/
  │   │       ├── parties/
  │   │       ├── invoices/
  │   │       ├── notifications/
- │   │       └── users/
+ │   │       ├── users/
+ │   │       └── developer/       # runtime diagnostics, DEBUG permission only
  │   ├── environments/            # environment.ts / environment.prod.ts
  │   ├── styles.scss              # global SCSS design system
  │   ├── index.html
