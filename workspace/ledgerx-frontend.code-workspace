@@ -61,12 +61,6 @@
         "git.ignoreRebaseWarning": true,
         "git.ignoreWindowsGit27Warning": true,
 
-        "github.copilot.chat.commitMessageGeneration.instructions": [
-            {
-                "text": "Use conventional commit message format. Always write commit messages in english. Do not include emojis in commit messages. Do not include the branch name in the commit message. Do not include the ticket number in the commit message. Do not include the ticket URL in the commit message.",
-            },
-        ],
-
         "[ignore]": {
             "editor.defaultFormatter": null,
             "editor.formatOnPaste": false,
