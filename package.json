@@ -3,10 +3,12 @@
     "version": "0.0.0",
     "scripts": {
         "ng": "ng",
-        "start": "ng serve",
-        "build": "ng build",
-        "watch": "ng build --watch --configuration development",
-        "test": "ng test"
+        "start": "ng serve --verbose",
+        "build:debug": "ng build --clear-screen --progress --configuration development --subresource-integrity",
+        "build:release": "ng build --clear-screen --progress --optimization --configuration production --subresource-integrity",
+        "watch": "ng build --watch --clear-screen --progress --configuration development --subresource-integrity",
+        "test": "ng test",
+        "test:coverage": "ng test --coverage"
     },
     "private": true,
     "packageManager": "pnpm@10.33.0",
@@ -24,6 +26,7 @@
         "@angular/build": "^22.1.2",
         "@angular/cli": "^22.1.2",
         "@angular/compiler-cli": "^22.1.0",
+        "@vitest/coverage-v8": "^4.1.10",
         "jsdom": "^28.1.0",
         "prettier": "^3.9.6",
         "typescript": "~6.0.3",
