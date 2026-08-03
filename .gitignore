@@ -49,6 +49,9 @@ fabric.properties
 http-client.private.env.json
 out/
 
+# Microsoft Visual Studio
+.vs/
+
 # Microsoft Visual Studio Code
 .history/
 .vscode/
