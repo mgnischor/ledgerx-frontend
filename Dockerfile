@@ -11,7 +11,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm build
+RUN pnpm build:release
 
 # ---- Runtime stage ----------------------------------------------------------
 FROM nginx:1.27-alpine AS runtime
