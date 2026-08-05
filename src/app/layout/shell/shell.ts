@@ -65,6 +65,7 @@ export class Shell {
 
     constructor() {
         this.refreshUnread$.next();
+        this.companyContext.refresh();
     }
 
     protected selectCompany(companyId: string): void {
