@@ -5,13 +5,18 @@ services:
             dockerfile: Dockerfile
         environment:
             # Origin of the LedgerX backend the embedded nginx reverse-proxies /api/ to.
-            # Defaults to the backend's compose.yaml host port mapping (25360:8080), reached
-            # from inside the container through the Docker Desktop host gateway. Override this
-            # (e.g. in a .env file) if the backend runs elsewhere, such as on the shared
-            # "ledgerx-backend_default" network as service "ledgerx:8080".
-            - "BACKEND_ORIGIN=${BACKEND_ORIGIN:-https://host.docker.internal:25360}"
+            # Reaches the backend directly by service name on the shared
+            # "ledgerx-backend_default" network (see the "networks" section below), avoiding
+            # host.docker.internal, which on Docker Desktop can resolve to an unreachable IPv6
+            # address and cause intermittent connection failures.
+            - "BACKEND_ORIGIN=${BACKEND_ORIGIN:-https://ledgerx:8080}"
         ports:
             - "${FRONTEND_PORT:-4200}:80"
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
+        networks:
+            - default
+            - ledgerx-backend_default
         restart: unless-stopped
+
+networks:
+    ledgerx-backend_default:
+        external: true
