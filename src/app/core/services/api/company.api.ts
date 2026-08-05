@@ -10,6 +10,10 @@ export class CompanyApi {
 
     constructor(private readonly http: HttpClient) {}
 
+    list(): Observable<CompanyDto[]> {
+        return this.http.get<CompanyDto[]>(this.baseUrl);
+    }
+
     register(request: CreateCompanyRequest): Observable<CompanyDto> {
         return this.http.post<CompanyDto>(this.baseUrl, request);
     }
