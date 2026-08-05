@@ -1,16 +1,21 @@
-import { Injectable, computed, signal } from "@angular/core";
+import { Injectable, computed, inject, signal } from "@angular/core";
 import { CompanyDto } from "../models/company.model";
+import { CompanyApi } from "./api/company.api";
 
 const STORAGE_KEY = "ledgerx.known-companies";
 const SELECTED_KEY = "ledgerx.selected-company";
 
 /**
- * The API has no "list companies" endpoint (BUSINESS_RULES.md / company controller only exposes
- * create and deactivate), so known companies are tracked client-side: every company created or
- * manually added through the UI is remembered here and offered as the active company context.
+ * Companies have no per-user membership: any authorized caller can see every company via
+ * {@code GET /api/v1/companies}. {@link refresh} pulls that full list so a user (e.g. the
+ * DEVELOPER bootstrap admin) has every tenant available, not just ones created/added in this
+ * browser. The client-side cache is kept as a fallback so the last known list still renders
+ * before {@link refresh} resolves (e.g. briefly offline).
  */
 @Injectable({ providedIn: "root" })
 export class CompanyContextService {
+    private readonly companyApi = inject(CompanyApi);
+
     private readonly companies = signal<CompanyDto[]>(this.restore());
     private readonly selectedId = signal<string | null>(localStorage.getItem(SELECTED_KEY));
 
@@ -18,6 +23,17 @@ export class CompanyContextService {
     readonly selectedCompany = computed(
         () => this.companies().find((company) => company.id === this.selectedId()) ?? null,
     );
+
+    /** Fetches every company from the backend and replaces the known/cached list with it. */
+    refresh(): void {
+        this.companyApi.list().subscribe((companies) => {
+            this.companies.set(companies);
+            this.persist();
+            if (!this.selectedId() && companies.length > 0) {
+                this.select(companies[0].id);
+            }
+        });
+    }
 
     remember(company: CompanyDto): void {
         this.companies.update((companies) => {
