@@ -49,12 +49,14 @@ export class Shell {
 
     protected readonly sidebarOpen = signal(false);
 
+    /** The navigation entries the current user's roles and permissions allow, in display order. */
     protected readonly navItems = NAV_ITEMS.filter(
         (item) =>
             (!item.roles || this.authService.hasRole(...item.roles)) &&
             (!item.permissions || this.authService.hasPermission(...item.permissions)),
     );
 
+    /** The current user's unread-notification count, refreshed on demand. */
     protected readonly unreadCount = toSignal(
         this.refreshUnread$.pipe(
             switchMap(() => this.notificationApi.list(true)),
@@ -63,24 +65,38 @@ export class Shell {
         { initialValue: 0 },
     );
 
+    /** Kicks off the initial unread-notification count and refreshes the company context. */
     constructor() {
         this.refreshUnread$.next();
         this.companyContext.refresh();
     }
 
+    /**
+     * Selects a company as the active one in the company context.
+     *
+     * @param companyId the id of the company to select
+     */
     protected selectCompany(companyId: string): void {
         this.companyContext.select(companyId);
     }
 
+    /** Toggles the sidebar's open/closed state. */
     protected toggleSidebar(): void {
         this.sidebarOpen.update((open) => !open);
     }
 
+    /** Signs the user out and navigates to the login page. */
     protected logout(): void {
         this.authService.logout();
         this.router.navigateByUrl("/login");
     }
 
+    /**
+     * Derives a short two-character avatar label from an email address.
+     *
+     * @param email the user's email, or `null` when signed out
+     * @returns the first two characters of the email uppercased, or `?` when absent
+     */
     protected initials(email: string | null): string {
         if (!email) {
             return "?";
