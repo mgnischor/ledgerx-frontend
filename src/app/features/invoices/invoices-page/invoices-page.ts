@@ -46,6 +46,7 @@ export class InvoicesPage {
         installmentAmounts: ["", [Validators.required]],
     });
 
+    /** The selected company's parties, reloaded when the selected company changes. */
     protected readonly parties = toSignal(
         toObservable(this.companyContext.selectedCompany).pipe(
             switchMap((company) => (company ? this.partyApi.list(company.id) : of([]))),
@@ -53,6 +54,7 @@ export class InvoicesPage {
         { initialValue: [] as PartyDto[] },
     );
 
+    /** The invoice fetched by the lookup stream, or `null` before a lookup or when the id is unknown. */
     protected readonly lookedUpInvoice = toSignal(
         this.lookup$.pipe(
             switchMap((id) => {
@@ -66,6 +68,7 @@ export class InvoicesPage {
         { initialValue: null as InvoiceDto | null },
     );
 
+    /** Pre-fills the party when the route carries a `partyId` query parameter and opens the form. */
     constructor() {
         const partyId = this.route.snapshot.queryParamMap.get("partyId");
         if (partyId) {
@@ -74,10 +77,21 @@ export class InvoicesPage {
         }
     }
 
+    /**
+     * Resolves a party id to its display name.
+     *
+     * @param partyId the party's id
+     * @returns the party name, or the id itself when unknown
+     */
     protected partyName(partyId: string): string {
         return this.parties().find((p) => p.id === partyId)?.name ?? partyId;
     }
 
+    /**
+     * Parses the comma-separated installment amounts and issues the invoice for the selected company.
+     *
+     * Rejects the submission with a toast when no valid installment amount is provided.
+     */
     protected submit(): void {
         const company = this.companyContext.selectedCompany();
         if (!company || this.form.invalid || this.submitting()) {
@@ -114,6 +128,7 @@ export class InvoicesPage {
             });
     }
 
+    /** Triggers a lookup of the invoice entered in the lookup field. */
     protected lookup(): void {
         const id = this.lookupId().trim();
         if (id) {
@@ -121,6 +136,7 @@ export class InvoicesPage {
         }
     }
 
+    /** Registers a payment against the currently looked-up invoice's installment. */
     protected registerPayment(): void {
         const invoice = this.lookedUpInvoice();
         const installmentId = this.installmentId().trim();
@@ -135,6 +151,7 @@ export class InvoicesPage {
         });
     }
 
+    /** Cancels the currently looked-up invoice after confirmation. */
     protected cancel(): void {
         const invoice = this.lookedUpInvoice();
         if (!invoice || !confirm(this.i18n.t("invoices.confirmCancel"))) {
@@ -148,6 +165,7 @@ export class InvoicesPage {
         });
     }
 
+    /** Returns today's date formatted as `YYYY-MM-DD`. */
     private today(): string {
         return new Date().toISOString().slice(0, 10);
     }
