@@ -39,6 +39,7 @@ export class BudgetsPage {
         limit: [0, [Validators.required, Validators.min(0.01)]],
     });
 
+    /** The company's budgets, reloaded when the selected company changes or the list is re-requested. */
     protected readonly budgets = toSignal(
         merge(toObservable(this.companyContext.selectedCompany), this.reload$).pipe(
             switchMap(() => {
@@ -49,6 +50,7 @@ export class BudgetsPage {
         { initialValue: [] as BudgetDto[] },
     );
 
+    /** The company's categories, reloaded when the selected company changes. */
     protected readonly categories = toSignal(
         toObservable(this.companyContext.selectedCompany).pipe(
             switchMap((company) => (company ? this.categoryApi.list(company.id) : of([]))),
@@ -56,14 +58,26 @@ export class BudgetsPage {
         { initialValue: [] as CategoryDto[] },
     );
 
+    /** The loaded categories restricted to expense types, which budgets are attached to. */
     protected get expenseCategories(): CategoryDto[] {
         return this.categories().filter((category) => category.type === "EXPENSE");
     }
 
+    /**
+     * Resolves a category id to its display name.
+     *
+     * @param categoryId the category's id
+     * @returns the category name, or the id itself when unknown
+     */
     protected categoryName(categoryId: string): string {
         return this.categories().find((c) => c.id === categoryId)?.name ?? categoryId;
     }
 
+    /**
+     * Submits the budget form and creates the budget for the currently selected company.
+     *
+     * Marks every field as touched when the form is invalid or a request is already in flight.
+     */
     protected submit(): void {
         const company = this.companyContext.selectedCompany();
         if (!company || this.form.invalid || this.submitting()) {
@@ -88,6 +102,11 @@ export class BudgetsPage {
             });
     }
 
+    /**
+     * Fetches and caches the spend-vs-limit status for a budget.
+     *
+     * @param budget the budget whose status to load
+     */
     protected loadStatus(budget: BudgetDto): void {
         const company = this.companyContext.selectedCompany();
         if (!company) {
@@ -98,6 +117,11 @@ export class BudgetsPage {
         });
     }
 
+    /**
+     * Deactivates a budget after confirmation and reloads the list.
+     *
+     * @param budget the budget to deactivate
+     */
     protected deactivate(budget: BudgetDto): void {
         const company = this.companyContext.selectedCompany();
         if (!company || !confirm(this.i18n.t("budgets.confirmDeactivate"))) {
@@ -111,6 +135,7 @@ export class BudgetsPage {
         });
     }
 
+    /** Returns the current calendar month formatted as `YYYY-MM`. */
     private currentMonth(): string {
         return new Date().toISOString().slice(0, 7);
     }
