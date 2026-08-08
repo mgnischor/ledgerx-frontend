@@ -53,6 +53,7 @@ export class RecurringTransactionsPage {
         firstOccurrence: [this.today(), [Validators.required]],
     });
 
+    /** The company's recurring-transaction rules, reloaded when the selected company changes or the list is re-requested. */
     protected readonly rules = toSignal(
         merge(toObservable(this.companyContext.selectedCompany), this.reload$).pipe(
             switchMap(() => {
@@ -63,6 +64,7 @@ export class RecurringTransactionsPage {
         { initialValue: [] as RecurringTransactionRuleDto[] },
     );
 
+    /** The company's financial accounts, reloaded when the selected company changes. */
     protected readonly accounts = toSignal(
         toObservable(this.companyContext.selectedCompany).pipe(
             switchMap((company) => (company ? this.financialAccountApi.list(company.id) : of([]))),
@@ -70,6 +72,7 @@ export class RecurringTransactionsPage {
         { initialValue: [] as FinancialAccountDto[] },
     );
 
+    /** The company's categories, reloaded when the selected company changes. */
     protected readonly categories = toSignal(
         toObservable(this.companyContext.selectedCompany).pipe(
             switchMap((company) => (company ? this.categoryApi.list(company.id) : of([]))),
@@ -77,18 +80,41 @@ export class RecurringTransactionsPage {
         { initialValue: [] as CategoryDto[] },
     );
 
+    /**
+     * Filters the loaded categories to a single transaction type.
+     *
+     * @param type the transaction type to keep
+     * @returns the matching categories
+     */
     protected filteredCategories(type: TransactionType): CategoryDto[] {
         return this.categories().filter((category) => category.type === type);
     }
 
+    /**
+     * Resolves a financial-account id to its display name.
+     *
+     * @param accountId the account's id
+     * @returns the account name, or the id itself when unknown
+     */
     protected accountName(accountId: string): string {
         return this.accounts().find((a) => a.id === accountId)?.name ?? accountId;
     }
 
+    /**
+     * Resolves a category id to its display name.
+     *
+     * @param categoryId the category's id
+     * @returns the category name, or the id itself when unknown
+     */
     protected categoryName(categoryId: string): string {
         return this.categories().find((c) => c.id === categoryId)?.name ?? categoryId;
     }
 
+    /**
+     * Submits the rule form and creates the recurring-transaction rule for the selected company.
+     *
+     * Marks every field as touched when the form is invalid or a request is already in flight.
+     */
     protected submit(): void {
         const company = this.companyContext.selectedCompany();
         if (!company || this.form.invalid || this.submitting()) {
@@ -119,6 +145,7 @@ export class RecurringTransactionsPage {
             });
     }
 
+    /** Materializes every due recurring-transaction rule and reloads the list. */
     protected generateDue(): void {
         const company = this.companyContext.selectedCompany();
         if (!company) {
@@ -139,6 +166,11 @@ export class RecurringTransactionsPage {
             });
     }
 
+    /**
+     * Deactivates a recurring-transaction rule after confirmation and reloads the list.
+     *
+     * @param rule the rule to deactivate
+     */
     protected deactivate(rule: RecurringTransactionRuleDto): void {
         const company = this.companyContext.selectedCompany();
         if (!company || !confirm(this.i18n.t("recurringTransactions.confirmDeactivate"))) {
@@ -152,6 +184,7 @@ export class RecurringTransactionsPage {
         });
     }
 
+    /** Returns today's date formatted as `YYYY-MM-DD`. */
     private today(): string {
         return new Date().toISOString().slice(0, 10);
     }
