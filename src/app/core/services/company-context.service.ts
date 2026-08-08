@@ -19,7 +19,9 @@ export class CompanyContextService {
     private readonly companies = signal<CompanyDto[]>(this.restore());
     private readonly selectedId = signal<string | null>(localStorage.getItem(SELECTED_KEY));
 
+    /** Read-only view of every company currently known to the context (cached or freshly loaded). */
     readonly knownCompanies = this.companies.asReadonly();
+    /** The currently selected company, or `null` when none is selected. */
     readonly selectedCompany = computed(
         () => this.companies().find((company) => company.id === this.selectedId()) ?? null,
     );
@@ -35,6 +37,12 @@ export class CompanyContextService {
         });
     }
 
+    /**
+     * Upserts a company into the known/cached list, persisting it and selecting it when nothing is
+     * selected yet.
+     *
+     * @param company the company to add or refresh
+     */
     remember(company: CompanyDto): void {
         this.companies.update((companies) => {
             const withoutExisting = companies.filter((c) => c.id !== company.id);
@@ -46,6 +54,11 @@ export class CompanyContextService {
         }
     }
 
+    /**
+     * Removes a company from the known/cached list, clearing the selection if it was selected.
+     *
+     * @param companyId the id of the company to forget
+     */
     forget(companyId: string): void {
         this.companies.update((companies) => companies.filter((c) => c.id !== companyId));
         this.persist();
@@ -55,15 +68,26 @@ export class CompanyContextService {
         }
     }
 
+    /**
+     * Selects a company as the active one, persisting the choice across reloads.
+     *
+     * @param companyId the id of the company to select
+     */
     select(companyId: string): void {
         this.selectedId.set(companyId);
         localStorage.setItem(SELECTED_KEY, companyId);
     }
 
+    /** Writes the current known-company list to `localStorage`. */
     private persist(): void {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.companies()));
     }
 
+    /**
+     * Reads the previously cached known-company list from `localStorage`.
+     *
+     * @returns the restored companies, or an empty array when absent or malformed
+     */
     private restore(): CompanyDto[] {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
