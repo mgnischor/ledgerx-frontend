@@ -30,6 +30,7 @@ export class DashboardPage {
     protected readonly from = signal(this.monthsAgo(1));
     protected readonly to = signal(this.today());
 
+    /** The cash-flow summary for the selected company and date range, or `null` while loading or after a failure. */
     protected readonly summary = toSignal(
         merge(toObservable(this.companyContext.selectedCompany), this.refresh$).pipe(
             map(() => this.companyContext.selectedCompany()),
@@ -45,23 +46,32 @@ export class DashboardPage {
         { initialValue: null as CashFlowSummary | null },
     );
 
+    /** The six most recent notifications for the current user. */
     protected readonly notifications = toSignal(
         this.notificationApi.list(false).pipe(map((notifications) => notifications.slice(0, 6))),
         { initialValue: [] as NotificationDto[] },
     );
 
+    /** Whether the current summary's net result is non-negative. */
     protected readonly netPositive = computed(() => (this.summary()?.netResult ?? 0) >= 0);
 
+    /** Triggers a reload of the summary for the selected company and date range. */
     protected applyRange(): void {
         if (this.companyContext.selectedCompany()) {
             this.refresh$.next();
         }
     }
 
+    /** Returns today's date formatted as `YYYY-MM-DD`. */
     private today(): string {
         return new Date().toISOString().slice(0, 10);
     }
 
+    /**
+     * Returns the date `months` months before today, formatted as `YYYY-MM-DD`.
+     *
+     * @param months the number of months to go back
+     */
     private monthsAgo(months: number): string {
         const date = new Date();
         date.setMonth(date.getMonth() - months);
