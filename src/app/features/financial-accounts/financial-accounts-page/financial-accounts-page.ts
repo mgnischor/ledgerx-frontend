@@ -35,6 +35,7 @@ export class FinancialAccountsPage {
         openingBalance: [0, [Validators.required, Validators.min(0)]],
     });
 
+    /** The company's financial accounts, reloaded when the selected company changes or the list is re-requested. */
     protected readonly accounts = toSignal(
         merge(toObservable(this.companyContext.selectedCompany), this.reload$).pipe(
             switchMap(() => {
@@ -45,6 +46,11 @@ export class FinancialAccountsPage {
         { initialValue: [] as FinancialAccountDto[] },
     );
 
+    /**
+     * Submits the account form and creates the financial account for the currently selected company.
+     *
+     * Marks every field as touched when the form is invalid or a request is already in flight.
+     */
     protected submit(): void {
         const company = this.companyContext.selectedCompany();
         if (!company || this.form.invalid || this.submitting()) {
@@ -70,6 +76,11 @@ export class FinancialAccountsPage {
             });
     }
 
+    /**
+     * Deactivates a financial account after confirmation and reloads the list.
+     *
+     * @param account the account to deactivate
+     */
     protected deactivate(account: FinancialAccountDto): void {
         const company = this.companyContext.selectedCompany();
         if (!company || !confirm(this.i18n.t("financialAccounts.confirmDeactivate", { name: account.name }))) {
