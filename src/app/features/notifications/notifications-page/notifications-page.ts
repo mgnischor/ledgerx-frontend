@@ -21,20 +21,28 @@ export class NotificationsPage {
 
     protected readonly unreadOnly = signal(false);
 
+    /** The current user's notifications, reloaded on demand and optionally restricted to unread ones. */
     protected readonly notifications = toSignal(
         this.reload$.pipe(switchMap(() => this.notificationApi.list(this.unreadOnly()))),
         { initialValue: [] as NotificationDto[] },
     );
 
+    /** Loads the notification list when the page is constructed. */
     constructor() {
         this.reload$.next();
     }
 
+    /** Toggles the unread-only filter and reloads the notification list. */
     protected toggleUnreadOnly(): void {
         this.unreadOnly.update((value) => !value);
         this.reload$.next();
     }
 
+    /**
+     * Marks a notification as read and reloads the list.
+     *
+     * @param notification the notification to mark as read
+     */
     protected markAsRead(notification: NotificationDto): void {
         this.notificationApi.markAsRead(notification.id).subscribe(() => this.reload$.next());
     }
