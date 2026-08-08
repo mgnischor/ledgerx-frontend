@@ -45,6 +45,11 @@ export class CompaniesPage {
         country: ["Brazil", [Validators.required, Validators.maxLength(60)]],
     });
 
+    /**
+     * Submits the registration form, creates the company, and remembers it in the company context.
+     *
+     * Marks every field as touched when the form is invalid or a request is already in flight.
+     */
     protected submit(): void {
         if (this.form.invalid || this.submitting()) {
             this.form.markAllAsTouched();
@@ -68,6 +73,12 @@ export class CompaniesPage {
             });
     }
 
+    /**
+     * Deactivates a company after confirmation and refreshes it in the company context.
+     *
+     * @param companyId the id of the company to deactivate
+     * @param tradeName the company's trade name, used in the confirmation and toast messages
+     */
     protected deactivate(companyId: string, tradeName: string): void {
         if (!confirm(this.i18n.t("companies.confirmDeactivate", { name: tradeName }))) {
             return;
@@ -80,11 +91,21 @@ export class CompaniesPage {
         });
     }
 
+    /**
+     * Selects a company as the active one in the company context.
+     *
+     * @param companyId the id of the company to select
+     */
     protected select(companyId: string): void {
         this.companyContext.select(companyId);
         this.toast.info(this.i18n.t("companies.toastActiveCompanyUpdated"));
     }
 
+    /**
+     * Removes a company from the local company context without touching the backend.
+     *
+     * @param companyId the id of the company to forget
+     */
     protected forget(companyId: string): void {
         this.companyContext.forget(companyId);
     }
