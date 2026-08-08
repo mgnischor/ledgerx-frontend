@@ -28,6 +28,11 @@ export class LoginPage {
         password: ["", [Validators.required]],
     });
 
+    /**
+     * Submits the credentials, signs the user in, and navigates to the application root on success.
+     *
+     * Marks every field as touched when the form is invalid or a request is already in flight.
+     */
     protected submit(): void {
         if (this.form.invalid || this.submitting()) {
             this.form.markAllAsTouched();
