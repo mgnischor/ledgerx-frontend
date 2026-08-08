@@ -12,6 +12,11 @@ import { TranslatePipe } from "../../pipes/translate.pipe";
 export class LanguageSwitcher {
     protected readonly i18n = inject(TranslationService);
 
+    /**
+     * Switches the application's active locale to the selected value.
+     *
+     * @param value the selected locale code, e.g. `pt-BR`
+     */
     protected onChange(value: string): void {
         this.i18n.setLocale(value as Locale);
     }
