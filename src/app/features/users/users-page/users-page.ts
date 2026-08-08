@@ -33,6 +33,11 @@ export class UsersPage {
     protected readonly grantUserId = signal("");
     protected readonly grantRole = signal<Role>("COLLABORATOR");
 
+    /**
+     * Submits the registration form and creates the user, prepending them to the list.
+     *
+     * Marks every field as touched when the form is invalid or a request is already in flight.
+     */
     protected register(): void {
         if (this.form.invalid || this.submitting()) {
             this.form.markAllAsTouched();
@@ -55,6 +60,7 @@ export class UsersPage {
             });
     }
 
+    /** Grants the selected role to the entered user id and updates the list. */
     protected grantRoleToUser(): void {
         const userId = this.grantUserId().trim();
         if (!userId) {
@@ -73,6 +79,11 @@ export class UsersPage {
         });
     }
 
+    /**
+     * Deactivates a user after confirmation and updates the list.
+     *
+     * @param user the user to deactivate
+     */
     protected deactivate(user: UserDto): void {
         if (!confirm(this.i18n.t("users.confirmDeactivate", { name: user.fullName }))) {
             return;
