@@ -35,6 +35,7 @@ export class CategoriesPage {
         type: ["EXPENSE" as TransactionType, [Validators.required]],
     });
 
+    /** The company's categories, reloaded when the selected company changes or the list is re-requested. */
     protected readonly categories = toSignal(
         merge(toObservable(this.companyContext.selectedCompany), this.reload$).pipe(
             switchMap(() => {
@@ -45,6 +46,11 @@ export class CategoriesPage {
         { initialValue: [] as CategoryDto[] },
     );
 
+    /**
+     * Submits the category form and creates the category for the currently selected company.
+     *
+     * Marks every field as touched when the form is invalid or a request is already in flight.
+     */
     protected submit(): void {
         const company = this.companyContext.selectedCompany();
         if (!company || this.form.invalid || this.submitting()) {
