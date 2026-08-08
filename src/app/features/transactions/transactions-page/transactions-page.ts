@@ -52,6 +52,7 @@ export class TransactionsPage {
         amount: [0, [Validators.required, Validators.min(0.01)]],
     });
 
+    /** The company's financial accounts, reloaded when the selected company changes or the list is re-requested. */
     protected readonly accounts = toSignal(
         merge(toObservable(this.companyContext.selectedCompany), this.reloadAccounts$).pipe(
             switchMap(() => {
@@ -62,6 +63,7 @@ export class TransactionsPage {
         { initialValue: [] as FinancialAccountDto[] },
     );
 
+    /** The company's categories, reloaded when the selected company changes. */
     protected readonly categories = toSignal(
         toObservable(this.companyContext.selectedCompany).pipe(
             switchMap((company) => (company ? this.categoryApi.list(company.id) : of([]))),
@@ -69,14 +71,31 @@ export class TransactionsPage {
         { initialValue: [] as CategoryDto[] },
     );
 
+    /**
+     * Filters the loaded categories to a single transaction type.
+     *
+     * @param type the transaction type to keep
+     * @returns the matching categories
+     */
     protected filteredCategories(type: TransactionType): CategoryDto[] {
         return this.categories().filter((category) => category.type === type);
     }
 
+    /**
+     * Translates a transaction type and lowercases it, e.g. for the form's labels.
+     *
+     * @param type the transaction type to translate
+     * @returns the lowercased localized label
+     */
     protected typeLabelLower(type: TransactionType): string {
         return this.i18n.t(`enums.transactionType.${type}`).toLowerCase();
     }
 
+    /**
+     * Submits the transaction form and records the movement.
+     *
+     * Marks every field as touched when the form is invalid or a request is already in flight.
+     */
     protected submitTransaction(): void {
         if (this.form.invalid || this.submitting()) {
             this.form.markAllAsTouched();
@@ -100,6 +119,11 @@ export class TransactionsPage {
             });
     }
 
+    /**
+     * Submits the transfer form and moves funds between the two selected accounts.
+     *
+     * Marks every field as touched when the form is invalid or a request is already in flight.
+     */
     protected submitTransfer(): void {
         if (this.transferForm.invalid || this.transferSubmitting()) {
             this.transferForm.markAllAsTouched();
@@ -122,6 +146,7 @@ export class TransactionsPage {
             });
     }
 
+    /** Returns today's date formatted as `YYYY-MM-DD`. */
     private today(): string {
         return new Date().toISOString().slice(0, 10);
     }
