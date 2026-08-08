@@ -28,6 +28,7 @@ export class DeveloperPage {
     protected readonly errored = signal(false);
     protected readonly headers = signal<DebugHeaders | null>(null);
 
+    /** The backend developer info and trace headers, or `null` while loading or after a failure. */
     protected readonly info = toSignal(
         this.reload$.pipe(
             switchMap(() => {
@@ -53,14 +54,22 @@ export class DeveloperPage {
         { initialValue: null as DeveloperInfoDto | null },
     );
 
+    /** Kicks off the first info load when the page is constructed. */
     constructor() {
         this.reload$.next();
     }
 
+    /** Re-fetches the backend developer info and debug headers. */
     protected refresh(): void {
         this.reload$.next();
     }
 
+    /**
+     * Formats an uptime in milliseconds as `Hh Mm Ss`.
+     *
+     * @param uptimeMillis the uptime to format, in milliseconds
+     * @returns the human-readable uptime
+     */
     protected formatUptime(uptimeMillis: number): string {
         const totalSeconds = Math.floor(uptimeMillis / 1000);
         const hours = Math.floor(totalSeconds / 3600);
@@ -69,6 +78,12 @@ export class DeveloperPage {
         return `${hours}h ${minutes}m ${seconds}s`;
     }
 
+    /**
+     * Formats a byte count using binary units (B, KB, MB, GB, TB).
+     *
+     * @param bytes the byte count to format; negative values render as "not available"
+     * @returns the formatted size string
+     */
     protected formatBytes(bytes: number): string {
         if (bytes < 0) {
             return this.i18n.t("developer.notAvailable");
@@ -82,14 +97,32 @@ export class DeveloperPage {
         return `${value.toFixed(exponent === 0 ? 0 : 2)} ${units[exponent]}`;
     }
 
+    /**
+     * Formats a ratio as a one-decimal percentage, or "not available" when `null`.
+     *
+     * @param value the 0-100 percentage to format
+     * @returns the formatted percentage string
+     */
     protected formatPercentage(value: number | null): string {
         return value === null ? this.i18n.t("developer.notAvailable") : `${value.toFixed(1)}%`;
     }
 
+    /**
+     * Formats a load average to two decimals, or "not available" when negative.
+     *
+     * @param value the load average to format
+     * @returns the formatted value
+     */
     protected formatLoadAverage(value: number): string {
         return value < 0 ? this.i18n.t("developer.notAvailable") : value.toFixed(2);
     }
 
+    /**
+     * Whether a version string starts with "unavailable", i.e. the backend could not resolve it.
+     *
+     * @param version the version string to test
+     * @returns `true` when the version is unavailable
+     */
     protected isUnavailable(version: string): boolean {
         return version.startsWith("unavailable");
     }
