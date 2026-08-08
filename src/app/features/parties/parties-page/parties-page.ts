@@ -39,6 +39,7 @@ export class PartiesPage {
         type: ["CUSTOMER" as PartyType, [Validators.required]],
     });
 
+    /** The company's parties, reloaded when the selected company changes or the list is re-requested. */
     protected readonly parties = toSignal(
         merge(toObservable(this.companyContext.selectedCompany), this.reload$).pipe(
             switchMap(() => {
@@ -49,6 +50,11 @@ export class PartiesPage {
         { initialValue: [] as PartyDto[] },
     );
 
+    /**
+     * Submits the party form and creates the party for the currently selected company.
+     *
+     * Marks every field as touched when the form is invalid or a request is already in flight.
+     */
     protected submit(): void {
         const company = this.companyContext.selectedCompany();
         if (!company || this.form.invalid || this.submitting()) {
