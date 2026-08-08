@@ -23,6 +23,11 @@ export class TranslationService {
         document.documentElement.lang = this.locale();
     }
 
+    /**
+     * Switches the active locale, persisting the choice and reloading that locale's translations.
+     *
+     * @param locale the locale to switch to; a no-op when it is already the active locale
+     */
     async setLocale(locale: Locale): Promise<void> {
         if (locale === this.locale()) {
             return;
@@ -41,6 +46,12 @@ export class TranslationService {
         return params ? this.interpolate(template, params) : template;
     }
 
+    /**
+     * Resolves a dot-notation key against the loaded translation tree.
+     *
+     * @param key the dot-notation key to resolve, e.g. `nav.dashboard`
+     * @returns the resolved string value, or `undefined` when the key is absent
+     */
     private lookup(key: string): string | undefined {
         let node: string | TranslationTree | undefined = this.translations();
         for (const segment of key.split(".")) {
@@ -52,12 +63,25 @@ export class TranslationService {
         return typeof node === "string" ? node : undefined;
     }
 
+    /**
+     * Replaces every `{{ paramName }}` placeholder in a template with the matching parameter.
+     *
+     * @param template the template string containing `{{ ... }}` placeholders
+     * @param params   the interpolation values, keyed by placeholder name
+     * @returns the template with known placeholders substituted; unknown ones are left untouched
+     */
     private interpolate(template: string, params: Record<string, string | number>): string {
         return template.replace(/{{\s*(\w+)\s*}}/g, (match, name: string) =>
             Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match,
         );
     }
 
+    /**
+     * Chooses the locale to use on first load: a stored preference, then an exact browser-language
+     * match, then a loose language-only match, and finally {@link DEFAULT_LOCALE}.
+     *
+     * @returns the resolved initial locale code
+     */
     private resolveInitialLocale(): Locale {
         const stored = localStorage.getItem(STORAGE_KEY) as Locale | null;
         if (stored && SUPPORTED_LOCALES.some((option) => option.code === stored)) {
