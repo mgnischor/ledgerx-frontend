@@ -4,8 +4,10 @@ import { Observable } from "rxjs";
 import { environment } from "../../../../environments/environment";
 import { DeveloperInfoDto } from "../../models/developer.model";
 
+/** HTTP client for the developer/debug endpoints. */
 @Injectable({ providedIn: "root" })
 export class DeveloperApi {
+    /** @param http the Angular HTTP client used to issue requests */
     constructor(private readonly http: HttpClient) {}
 
     /** Requests the full response (not just the body) to also surface the X-Debug-* trace headers. */
