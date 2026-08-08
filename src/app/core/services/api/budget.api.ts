@@ -7,8 +7,10 @@ import { BudgetDto, BudgetStatusDto, CreateBudgetRequest } from "../../models/ac
 /** HTTP client for the `accounting` context's budget endpoints. */
 @Injectable({ providedIn: "root" })
 export class BudgetApi {
+    /** @param http the Angular HTTP client used to issue requests */
     constructor(private readonly http: HttpClient) {}
 
+    /** Builds the base URL for a company's budget endpoints. */
     private baseUrl(companyId: string): string {
         return `${environment.apiUrl}/companies/${companyId}/budgets`;
     }
